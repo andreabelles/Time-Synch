@@ -35,16 +35,24 @@ end
 
 %% Generation of measurements and EKF
 nPts    = tEnd/tIMU;
-pIMU    = zeros(nPts,1);
-pGNSS   = nan(nPts,1);
-pIMU(1) = p0;
 measAcc = zeros(nPts,1);
+vIMU    = zeros(nPts,1);
+pIMU    = zeros(nPts,1);
+vIMU(1) = v0;
+pIMU(1) = p0;
+pGNSS   = nan(nPts,1);
 
 % EKF parameters and initializations
-rEKF   = zeros(3,nPts);
-rEKF(:, 1) = [0; 0; 0]; % Pos, Vel, bAcc
-PEKF   = zeros(3,3,nPts);
-PEKF(:,:,1) = [sigmaGNSS^2 0 0; 0 sigmaV^2 0; 0 0 sigmaAcc^2];
+xEKF        = zeros(2,nPts); % Pos, Vel
+xEKF(:, 1)  = [0; 0];
+PEKF        = zeros(2,2,nPts);
+PEKF(:,:,1) = [sigmaGNSS^2 0; 0 sigmaV^2];
+
+% Integration IMU/GNSS parameters and initializations
+vIntEKF         = zeros(1,nPts);
+vIntEKF(1)   = vIMU(1);
+pIntEKF         = zeros(1,nPts);
+pIntEKF(1)   = pIMU(1);
 
 xSkog   = zeros(3,nPts);
 xSkog(:, 1) = [0; 0; 0];
@@ -56,15 +64,23 @@ PSkog(:,:,1) = [sigmaGNSS^2 0 0; 0 sigmaV^2 0; 0 0 sigmaTd^2];
 % xJulier(1) = [p0; v0];
 
 for k = 2:1:nPts
-%     pIMU(k) = p(k*tIMU) + normrnd(0,sigmaIMU);
+    % IMU measurements generation
     measAcc(k) = a0 + normrnd(0,sigmaAcc);
-    pIMU(k) = pIMU(k-1) + v(k)*tIMU + (measAcc(k)*tIMU^2);
+    % GNSS measurements generation
     if mod(k,M) == 0
         pGNSS(k) = p(k*tIMU - tDelay) + normrnd(0,sigmaGNSS);
-    end    
+    end
+    % Strapdown equations
+    vIMU(k) = vIMU(k-1) + measAcc(k)*tIMU;
+    pIMU(k) = pIMU(k-1) + vIMU(k)*tIMU;
+        
     %EKF
-    [rEKF(:,k), PEKF(:,:,k)] = standardEKF(pGNSS(k), tIMU, rEKF(:,k-1), PEKF(:,:,k-1), sigmaAcc, sigmaGNSS, measAcc);
-    [xSkog(:,k), PSkog(:,:,k)] = skogEKF(pIMU(k), pGNSS(k), tIMU, xSkog(:,k-1), PSkog(:,:,k-1), sigmaAcc, sigmaGNSS, measAcc);
+    [xEKF(:,k), PEKF(:,:,k)] = standardEKF(vIMU(k), pIMU(k), pGNSS(k), tIMU, xEKF(:,k-1), PEKF(:,:,k-1), sigmaAcc, sigmaGNSS);
+    
+    pIntEKF(k) = pIMU(k) + xEKF(1,k);
+    vIntEKF(k) = vIMU(k) + xEKF(2,k);
+    
+    %[xSkog(:,k), PSkog(:,:,k)] = skogEKF(pIMU(k), pGNSS(k), tIMU, xSkog(:,k-1), PSkog(:,:,k-1), sigmaAcc, sigmaGNSS, measAcc);
     %[xLee(k)] = leeEKF(pGNSS(k), tIMU, xLee(k-1), sigmaAcc, sigmaGNSS);
     %[xJulier(k)] = julierCU(pGNSS(k), tIMU, xJulier(k-1), sigmaAcc, sigmaGNSS);
 end
@@ -75,8 +91,8 @@ tVec = 1:tEnd;
 kVec = 1:tIMU:tEnd;
 errorIMU = p(kVec)-pIMU;
 errorGNSS = p(kVec)-pGNSS;
-errorEKF = [p(kVec), v(kVec)]' - rEKF;
-
+errPosEKF = p(kVec) - pIntEKF;
+errVelEKF = v(kVec) - vIntEKF;
 %% Plots
 % True trajectory vs measurements
 figure;
@@ -97,20 +113,28 @@ legend('IMU', 'GNSS');
 % True trajectory vs estimated trajectory
 figure;
 plot(tVec./1e3, p, 'k-', 'Linewidth', 1); hold on;
-plot(kVec./1e3, rEKF(1,:), 'b-'); 
+plot(kVec./1e3, pIntEKF, 'b-'); 
 xlabel('Time (s)'); ylabel('Position (m)')
+title('Standard EKF method');
+legend('True', 'Estimated');
+
+% True Velocity vs estimated velocity
+figure;
+plot(tVec./1e3, v, 'k-', 'Linewidth', 1); hold on;
+plot(kVec./1e3, vIntEKF*1e3, 'b-'); 
+xlabel('Time (s)'); ylabel('Velocity (m/s)')
 title('Standard EKF method');
 legend('True', 'Estimated');
 
 % Estimation Error plot
 figure
-plot(kVec./1e3, errorEKF(1, :), 'b-'); 
+plot(kVec./1e3, errPosEKF, 'b-'); 
 xlabel('Samples'); ylabel('Position error (m)')
-legend('IMU');
+
 figure
-plot(kVec./1e3, errorEKF(2, :)*1e3, 'b-'); 
+plot(kVec./1e3, errVelEKF*1e3, 'b-'); 
 xlabel('Samples'); ylabel('Velocity error (m/s)')
-legend('IMU');
+
 
 % figure;
 % plot(kVec./1e3, tDelay*ones(length(kVec)), 'k-', 'Linewidth', 1); hold on;
