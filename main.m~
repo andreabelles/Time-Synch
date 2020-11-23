@@ -5,8 +5,8 @@ clear; close all; clc;
 %% Definition of variables
 tEnd    = 60e3; % ms
 tIMU    = 10;   % ms
-tGNSS   = 5000;  % ms
-tDelay  = 1000;  % ms
+tGNSS   = 1000;  % ms
+tDelay  = 100;  % ms
 M       = tGNSS/tIMU;
 sigmaAcc = 0.2; % m/s^2
 sigmaGNSS = 3/sqrt(3); % m
@@ -75,8 +75,7 @@ for k = 2:1:nPts
     pIMU(k) = pIMU(k-1) + vIMU(k)*tIMU;
         
     %EKF
-    [pIntEKF(:,k), vIntEKF(:,k), PEKF(:,:,k)] = ...
-        standardEKF(pIntEKF(:,k-1), vIntEKF(:,k-1), pGNSS(k), measAcc(k), tIMU, xEKF(:,k-1), PEKF(:,:,k-1), sigmaAcc, sigmaGNSS);
+    [pIntEKF(:,k), vIntEKF(:,k), PEKF(:,:,k)] = standardEKF(pGNSS(k), tIMU, xEKF(:,k-1), PEKF(:,:,k-1), sigmaAcc, sigmaGNSS);
     
     %[xSkog(:,k), PSkog(:,:,k)] = skogEKF(pIMU(k), pGNSS(k), tIMU, xSkog(:,k-1), PSkog(:,:,k-1), sigmaAcc, sigmaGNSS, measAcc);
     %[xLee(k)] = leeEKF(pGNSS(k), tIMU, xLee(k-1), sigmaAcc, sigmaGNSS);
@@ -90,8 +89,8 @@ kVec = 1:tIMU:tEnd;
 errPosIMU = p(kVec)-pIMU;
 errVelIMU = v(kVec)-vIMU;
 errPosGNSS = p(kVec)-pGNSS;
-errPosEKF = p(kVec) - pIntEKF';
-errVelEKF = v(kVec) - vIntEKF';
+errPosEKF = p(kVec) - pIntEKF;
+errVelEKF = v(kVec) - vIntEKF;
 %% Plots
 % True trajectory vs measurements
 figure;

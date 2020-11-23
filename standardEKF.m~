@@ -10,7 +10,6 @@ function [pInt, vInt, PEst] = standardEKF(pInt, vInt, pGNSS, measAcc, tIMU, xOld
 % Strapdown equations
 vInt = vInt + measAcc * tIMU;
 pInt = pInt + vInt * tIMU;
-rInt = [pInt; vInt];
 
 % Initialization
 % deltaK = ~isnan(pGNSS);
@@ -25,7 +24,7 @@ PEst = F*POld*F' + Q;
 if(~isnan(pGNSS))
     H = [1 0];
     R = [sigmaGNSS^2];
-    z = pGNSS - H*rInt;
+    z = pGNSS - pInt;
     K = (POld*H')/(H*POld*H' + R);
     xEst = xEst + K*z;
     PEst = PEst - K*H*PEst;
