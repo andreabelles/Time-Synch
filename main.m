@@ -75,8 +75,15 @@ for k = 2:1:nPts
     pIMU(k) = pIMU(k-1) + vIMU(k)*tIMU;
         
     %EKF
-    [pIntEKF(:,k), vIntEKF(:,k), PEKF(:,:,k)] = ...
-        standardEKF(pIntEKF(:,k-1), vIntEKF(:,k-1), pGNSS(k), measAcc(k), tIMU, xEKF(:,k-1), PEKF(:,:,k-1), sigmaAcc, sigmaGNSS);
+    [pIntEKF(:,k), vIntEKF(:,k), PEKF(:,:,k)] = standardEKF(pIntEKF(:,k-1), ...
+                                                            vIntEKF(:,k-1), ...
+                                                            pGNSS(k),       ...
+                                                            measAcc(k),     ...
+                                                            tIMU,           ...
+                                                            xEKF(:,k-1),    ...
+                                                            PEKF(:,:,k-1),  ...
+                                                            sigmaAcc,       ...
+                                                            sigmaGNSS);
     
     %[xSkog(:,k), PSkog(:,:,k)] = skogEKF(pIMU(k), pGNSS(k), tIMU, xSkog(:,k-1), PSkog(:,:,k-1), sigmaAcc, sigmaGNSS, measAcc);
     %[xLee(k)] = leeEKF(pGNSS(k), tIMU, xLee(k-1), sigmaAcc, sigmaGNSS);
@@ -126,7 +133,7 @@ legend('True', 'Estimated');
 
 % True Velocity vs estimated velocity
 figure;
-plot(tVec./1e3, v, 'k-', 'Linewidth', 1); hold on;
+plot(tVec./1e3, v*1e3, 'k-', 'Linewidth', 1); hold on;
 plot(kVec./1e3, vIntEKF*1e3, 'b-'); 
 xlabel('Time (s)'); ylabel('Velocity (m/s)')
 title('Standard EKF method');
@@ -135,11 +142,13 @@ legend('True', 'Estimated');
 % Estimation Error plot
 figure
 plot(kVec./1e3, errPosEKF, 'b-'); 
-xlabel('Samples'); ylabel('Position error (m)')
+xlabel('Time (s)'); ylabel('Position error (m)')
+title('Standard EKF method');
 
 figure
 plot(kVec./1e3, errVelEKF*1e3, 'b-'); 
-xlabel('Samples'); ylabel('Velocity error (m/s)')
+xlabel('Time (s)'); ylabel('Velocity error (m/s)')
+title('Standard EKF method');
 
 
 % figure;
