@@ -14,8 +14,8 @@ sigmaGNSS = 3/sqrt(3); % m
 sigmaV = 0.1; %m/s
 sigmaTd = 13/1200; %s
 p0 = 0; % m
-v0 = 1; %m/s
-a0 = 0;
+v0 = 1; % m/s
+a0 = 0; % m/s^2
 
 % Conversion from s to ms
 sigmaAcc = sigmaAcc/1e6;
@@ -25,17 +25,24 @@ v0 = v0/1e3;
 a0 = a0/1e6;
 
 %% Generation of true trajectory
-p = zeros(tEnd,1);
-v = zeros(tEnd,1);
-p(1) = p0;
-v(1) = v0;
-for t = 2:1:tEnd
-    p(t) = p(t-1) + v(t-1);
-    v(t) = v(t-1);
-end
+y0      = [p0; v0];
+tspan   = 0:tIMU:tEnd;
+dydt    = @(t, y) [y(2); 0];
+[~, y]  = ode45(dydt,tspan,y0);
+p       = y(:, 1);
+v       = y(:, 2);
+
+% p = zeros(tEnd,1);
+% v = zeros(tEnd,1);
+% p(1) = p0;
+% v(1) = v0;
+% for t = 2:1:tEnd
+%     p(t) = p(t-1) + v(t-1);
+%     v(t) = v(t-1);
+% end
 
 %% Generation of measurements and EKF
-nPts    = tEnd/tIMU;
+nPts    = length(tspan);
 measAcc = zeros(nPts,1);
 vIMU    = zeros(nPts,1);
 pIMU    = zeros(nPts,1);
@@ -69,7 +76,7 @@ for k = 2:1:nPts
     measAcc(k) = a0 + normrnd(0,sigmaAcc);
     % GNSS measurements generation
     if mod(k,M) == 0
-        pGNSS(k) = p(k*tIMU - tDelay) + normrnd(0,sigmaGNSS);
+        pGNSS(k) = p(k - tDelay/tIMU) + normrnd(0,sigmaGNSS);
     end
     % Strapdown equations
     vIMU(k) = vIMU(k-1) + measAcc(k)*tIMU;
@@ -93,41 +100,40 @@ end
 
 %% Results
 % Computation of errors
-tVec = 1:tEnd;
-kVec = 1:tIMU:tEnd;
-errPosIMU = p(kVec)-pIMU;
-errVelIMU = v(kVec)-vIMU;
-errPosGNSS = p(kVec)-pGNSS;
-errPosEKF = p(kVec) - pIntEKF';
-errVelEKF = v(kVec) - vIntEKF';
+tVec = 0:tIMU:tEnd;
+errPosIMU = p - pIMU;
+errVelIMU = v - vIMU;
+errPosGNSS = p - pGNSS;
+errPosEKF = p - pIntEKF';
+errVelEKF = v - vIntEKF';
 %% Plots
 % True trajectory vs measurements
 figure;
 plot(tVec./1e3, p, 'k-', 'Linewidth', 1); hold on;
-plot(kVec./1e3, pIMU, 'b.'); 
-plot(kVec./1e3, pGNSS, 'r.');
+plot(tVec./1e3, pIMU, 'b.'); 
+plot(tVec./1e3, pGNSS, 'r.');
 xlabel('Time (s)'); ylabel('Position (m)')
 title('True trajectory');
 legend('True', 'IMU', 'GNSS');
 
 % IMU Position error plot
 figure
-plot(kVec/1e3, errPosIMU, 'b-'); hold on
-plot(kVec/1e3, errPosGNSS, 'r.');
+plot(tVec/1e3, errPosIMU, 'b-'); hold on
+plot(tVec/1e3, errPosGNSS, 'r.');
 xlabel('Time (s)'); ylabel('Position error (m)')
 legend('IMU', 'GNSS');
 title('IMU-only & GNSS-only Position error');
 
 % IMU Velocity error plot
 figure
-plot(kVec/1e3, errVelIMU*1e3, 'b-'); hold on
+plot(tVec/1e3, errVelIMU*1e3, 'b-'); hold on
 xlabel('Time (s)'); ylabel('Velocity error (m)')
 title('IMU-only Velocity error');
 
 % True trajectory vs estimated trajectory
 figure;
 plot(tVec./1e3, p, 'k-', 'Linewidth', 1); hold on;
-plot(kVec./1e3, pIntEKF, 'b-'); 
+plot(tVec./1e3, pIntEKF, 'b-'); 
 xlabel('Time (s)'); ylabel('Position (m)')
 title('Standard EKF method');
 legend('True', 'Estimated');
@@ -135,19 +141,19 @@ legend('True', 'Estimated');
 % True Velocity vs estimated velocity
 figure;
 plot(tVec./1e3, v*1e3, 'k-', 'Linewidth', 1); hold on;
-plot(kVec./1e3, vIntEKF*1e3, 'b-'); 
+plot(tVec./1e3, vIntEKF*1e3, 'b-'); 
 xlabel('Time (s)'); ylabel('Velocity (m/s)')
 title('Standard EKF method');
 legend('True', 'Estimated');
 
 % Estimation Error plot
 figure
-plot(kVec./1e3, errPosEKF, 'b-'); 
+plot(tVec./1e3, errPosEKF, 'b-'); 
 xlabel('Time (s)'); ylabel('Position error (m)')
 title('Standard EKF method');
 
 figure
-plot(kVec./1e3, errVelEKF*1e3, 'b-'); 
+plot(tVec./1e3, errVelEKF*1e3, 'b-'); 
 xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 title('Standard EKF method');
 
