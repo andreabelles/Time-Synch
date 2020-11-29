@@ -1,4 +1,4 @@
-function [pInt, vInt, PEst] = standardEKF(pInt, vInt, pGNSS, measAcc, tIMU, xOld, POld, sigmaAcc, sigmaGNSS)
+function [rInt, PEst] = standardEKF(rInt, pGNSS, measAcc, tIMU, POld, sigmaAcc, sigmaGNSS, sigmaBiasAcc)
 % EKF:  This function estimates the position and velocity using an EKF. 
 %
 % Inputs:   pIMU:   Position estimated by the IMU
@@ -6,32 +6,45 @@ function [pInt, vInt, PEst] = standardEKF(pInt, vInt, pGNSS, measAcc, tIMU, xOld
 %
 % Outputs:  delta x:      Error state vector estimation
 
+if (isnan(pGNSS)) % No GNSS observations
+    % Sensor error compensation
+    measAccCorr = measAcc + rInt(3);
 
-% Strapdown equations
-vInt = vInt + measAcc * tIMU;
-pInt = pInt + vInt * tIMU;
-rInt = [pInt; vInt];
+    % Strapdown equations updated
+    rInt(2) = rInt(2) + measAccCorr * tIMU;
+    rInt(1) = rInt(1) + rInt(2) * tIMU;
 
-% Initialization
-% deltaK = ~isnan(pGNSS);
-F = [1 tIMU; 0 1];
-Q = [sigmaAcc^2 0; 0 sigmaAcc^2];
+    % Sensor error update
+    rInt(3) = rInt(3);
 
-% State prediction
-xEst = F*xOld;
-PEst = F*POld*F' + Q;
+    % Initialization
+    F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
+    Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 0];
 
-% State Update
-if(~isnan(pGNSS))
-    H = [1 0];
+    % State prediction
+    PEst = F*POld*F' + Q;
+    
+else % GNSS observations
+    H = [1 0 0];
     R = [sigmaGNSS^2];
-    z = pGNSS - H*rInt;
     K = (POld*H')/(H*POld*H' + R);
-    xEst = xEst + K*z;
-    PEst = PEst - K*H*PEst;
+    z = pGNSS - H*rInt;
+    xEst = K*z;
+    rInt = rInt + xEst;
+    PEst = POld - K*H*POld;
+    
+    % Sensor error compensation
+    measAccCorr = measAcc + rInt(3);
+    % Strapdown equations updated
+    rInt(2) = rInt(2) + measAccCorr * tIMU;
+    rInt(1) = rInt(1) + rInt(2) * tIMU;
+    % Sensor error update
+    rInt(3) = rInt(3);
+    % Initialization
+    F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
+    Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 0];
+    % State prediction
+    PEst = F*PEst*F' + Q;
 end
-
-pInt = pInt + xEst(1);
-vInt = vInt + xEst(2);
 
 end
