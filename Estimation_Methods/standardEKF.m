@@ -1,4 +1,4 @@
-function [rInt, PEst] = standardEKF(rInt, pGNSS, measAcc, tIMU, POld, sigmaAcc, sigmaGNSS, sigmaBiasAcc)
+function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, POld, sigmaAcc, sigmaGNSS)
 % EKF:  This function estimates the position and velocity using an EKF. 
 %
 % Inputs:   pIMU:   Position estimated by the IMU
@@ -6,45 +6,29 @@ function [rInt, PEst] = standardEKF(rInt, pGNSS, measAcc, tIMU, POld, sigmaAcc, 
 %
 % Outputs:  delta x:      Error state vector estimation
 
-if (isnan(pGNSS)) % No GNSS observations
-    % Sensor error compensation
-    measAccCorr = measAcc + rInt(3);
-
-    % Strapdown equations updated
-    rInt(2) = rInt(2) + measAccCorr * tIMU;
-    rInt(1) = rInt(1) + rInt(2) * tIMU;
-
-    % Sensor error update
-    rInt(3) = rInt(3);
-
-    % Initialization
-    F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
-    Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 0];
-
-    % State prediction
-    PEst = F*POld*F' + Q;
-    
-else % GNSS observations
+if (~isnan(pGNSS)) % If GNSS position is available
     H = [1 0 0];
     R = [sigmaGNSS^2];
     K = (POld*H')/(H*POld*H' + R);
-    z = pGNSS - H*rInt;
+    z = pGNSS - H*rIMU;
     xEst = K*z;
-    rInt = rInt + xEst;
+    rIMU = rIMU + xEst;
     PEst = POld - K*H*POld;
-    
-    % Sensor error compensation
-    measAccCorr = measAcc + rInt(3);
-    % Strapdown equations updated
-    rInt(2) = rInt(2) + measAccCorr * tIMU;
-    rInt(1) = rInt(1) + rInt(2) * tIMU;
-    % Sensor error update
-    rInt(3) = rInt(3);
-    % Initialization
-    F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
-    Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 0];
-    % State prediction
-    PEst = F*PEst*F' + Q;
 end
+
+% Initialization
+F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
+Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 0];
+    
+% Sensor error compensation
+measAccCorr = measAcc + rIMU(3);
+% Strapdown equations updated
+rIMU(2) = rIMU(2) + measAccCorr * tIMU;
+rIMU(1) = rIMU(1) + rIMU(2) * tIMU;
+% Sensor error update
+rIMU(3) = rIMU(3);
+
+% Covariance prediction
+PEst = F*PEst*F' + Q;
 
 end

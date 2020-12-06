@@ -3,112 +3,20 @@ addpath(genpath('./'));
 % Time Synchronization GNSS-aided IMU project
 % (Description of the project here)
 
-%% Definition of variables
-tEnd    = 60e3; % ms
-tIMU    = 10;   % ms
-tGNSS   = 5000;  % ms
-tDelay  = 1000;  % ms
-M       = tGNSS/tIMU;
-sigmaAcc = 0.2; % m/s^2
-sigmaGNSS = 3/sqrt(3); % m
-sigmaV = 0.1; %m/s
-sigmaTd = 13/1200; %s
-sigmaBiasAcc = (0.1^2)/12;
-p0 = 0; % m
-v0 = 1; % m/s
-a0 = 0; % m/s^2
-
-% Conversion from s to ms
-sigmaAcc = sigmaAcc/1e6;
-sigmaV = sigmaV/1e3;
-sigmaTd = sigmaTd/1e3;
-sigmaBiasAcc = sigmaBiasAcc/1e6;
-v0 = v0/1e3;
-a0 = a0/1e6;
+[tEnd, tIMU, tGNSS, tDelay, M, sigmaAcc, sigmaGNSS, a0, v0, p0,         ...
+rp0, rv0, rba0, rt0, sigmaPos, sigmaVel, sigmaAccBias, sigmaTd]         ...
+    = loadConfigFile();
 
 %% Generation of true trajectory
-y0      = [p0; v0];
-tspan   = 0:tIMU:tEnd;
-dydt    = @(t, y) [y(2); a0];
-[~, y]  = ode45(dydt,tspan,y0);
-p       = y(:, 1);
-v       = y(:, 2);
-
-% p = zeros(tEnd,1);
-% v = zeros(tEnd,1);
-% p(1) = p0;
-% v(1) = v0;
-% for t = 2:1:tEnd
-%     p(t) = p(t-1) + v(t-1);
-%     v(t) = v(t-1);
-% end
+[tspan, p, v, a] = generateTrajectory(p0, v0, a0, tIMU, tEnd);
 
 %% Generation of measurements and EKF
-nPts    = length(tspan);
-measAcc = zeros(nPts,1);
-measAccCorr = zeros(nPts,1);
-vIMU    = zeros(nPts,1);
-pIMU    = zeros(nPts,1);
-vIMU(1) = v0;
-pIMU(1) = p0;
-pGNSS   = nan(nPts,1);
-
-% EKF parameters and initializations
-xEKF        = zeros(3,nPts); % Pos, Vel
-PEKF        = zeros(3,3,nPts);
-PEKF(:,:,1) = [sigmaGNSS^2 0 0; 0 sigmaV^2 0; 0 0 sigmaBiasAcc^2];
-
-% Integration IMU/GNSS parameters and initializations
-rIntEKF         = zeros(3,nPts);
-rIntEKF(2, 1)   = vIMU(1);
-rIntEKF(1, 1)   = pIMU(1);
-
-xSkog           = zeros(4,nPts);
-PSkog           = zeros(4,4,nPts);
-PSkog(:,:,1)    = [sigmaGNSS^2 0 0 0; 0 sigmaV^2 0 0; 0 0 sigmaBiasAcc^2 0; 0 0 0 sigmaTd^2];
-rIntSkog        = zeros(4,nPts);
-rIntSkog(2, 1)  = vIMU(1);
-rIntSkog(1, 1)  = pIMU(1);
-% xLee   = zeros(nPts,1);
-% xLee(1) = [p0; v0];
-% xJulier   = zeros(nPts,1);
-% xJulier(1) = [p0; v0];
-
-for k = 2:1:nPts
-    % IMU measurements generation
-    measAcc(k) = a0 + normrnd(0,sigmaAcc);
-    % GNSS measurements generation
-    if mod(k,M) == 0
-        pGNSS(k) = p(k - tDelay/tIMU) + normrnd(0,sigmaGNSS);
-    end
-    % Strapdown equations
-    vIMU(k) = vIMU(k-1) + measAcc(k)*tIMU;
-    pIMU(k) = pIMU(k-1) + vIMU(k)*tIMU;
-        
-    %EKF
-    [rIntEKF(:,k), PEKF(:,:,k)] = standardEKF(  rIntEKF(:,k-1), ...
-                                                pGNSS(k),       ...
-                                                measAcc(k),     ...
-                                                tIMU,           ...
-                                                PEKF(:,:,k-1),  ...
-                                                sigmaAcc,       ...
-                                                sigmaGNSS,      ...
-                                                sigmaBiasAcc);
-    
-    tNow = 0:tIMU:(k-1)*tIMU;
-    [rIntSkog(:,k), PSkog(:,:,k), ] = skogEKF(  rIntSkog(:,k-1),    ...
-                                                pGNSS(k),           ...
-                                                measAcc,            ...
-                                                measAccCorr,        ...
-                                                k,                  ...
-                                                tNow,               ...
-                                                tIMU,               ...
-                                                PSkog(:,:,k-1),      ...
-                                                sigmaAcc,           ...
-                                                sigmaGNSS);    
-    % TODO: Julier and Uhlman method                                            
-    % TODO: Lee and Johnson method
-end
+[pIMU, vIMU, pGNSS, rIntEKF, PEKF, rIntSkog, PSkog] = simulateEstimations(          ...
+                                                        p, tspan, M, tIMU, tDelay,  ...
+                                                        p0, v0, a0,                 ...
+                                                        rp0, rv0, rba0, rt0,        ...
+                                                        sigmaGNSS, sigmaAcc,        ...
+                                                        sigmaPos, sigmaVel, sigmaAccBias, sigmaTd);
 
 %% Results
 tVec        = 0:tIMU:tEnd;
@@ -126,6 +34,8 @@ errPosEKF   = abs(p - pIntEKF');
 errVelEKF   = v - vIntEKF';
 errPosSkog  = abs(p - pIntSkog');
 errVelSkog  = v - vIntSkog';
+
+
 %% Plots
 % True trajectory vs measurements
 figure;

@@ -15,7 +15,7 @@ Q = [0 0 0 0; 0 tIMU*sigmaAcc^2 0 0; 0 0 0 0; 0 0 0 0];
 measAccCorr(k) = measAcc(k) + rInt(3);
 
 % Interpolation of accelerometer measurement at t-Td
-measAccInt = interp1(t, measAccCorr(1:k), rInt(4));
+measAccInt = interp1(t, measAccCorr(1:k), t(end) - rInt(4)); % TODO: check constraint for Td
 
 if(isnan(pGNSS)) % No GNSS observations
     
@@ -46,9 +46,9 @@ else % GNSS observations
     PEst = POld + Kp*R*Kp' + Kp*piFactor*Kp' - F*gammaFactor*Kp' - Kp*gammaFactor'*F';
     
     % Sensor error compensation
-    measAccCorr = measAccInt + rInt(4);
+    measAccCorr(k) = measAccInt + rInt(4);
     % Strapdown equations updated
-    rInt(2) = rInt(2) + measAccCorr * tIMU;
+    rInt(2) = rInt(2) + measAccCorr(k) * tIMU;
     rInt(1) = rInt(1) + rInt(2) * tIMU;
     % Sensor error update
     rInt(3) = rInt(3);
