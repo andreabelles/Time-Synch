@@ -1,4 +1,4 @@
-function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, POld, sigmaAcc, sigmaGNSS)
+function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, sigmaAcc, sigmaGNSS)
 % EKF:  This function estimates the position and velocity using an EKF. 
 %
 % Inputs:   pIMU:   Position estimated by the IMU
@@ -9,11 +9,11 @@ function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, POld, sigm
 if (~isnan(pGNSS)) % If GNSS position is available
     H = [1 0 0];
     R = [sigmaGNSS^2];
-    K = (POld*H')/(H*POld*H' + R);
+    K = (PEst*H')/(H*PEst*H' + R);
     z = pGNSS - H*rIMU;
     xEst = K*z;
     rIMU = rIMU + xEst;
-    PEst = POld - K*H*POld;
+    PEst = PEst - K*H*PEst;
 end
 
 % Initialization
