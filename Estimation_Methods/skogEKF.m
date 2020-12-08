@@ -14,8 +14,8 @@ measAccCorr(k) = measAcc(k) + rIMU(3);
 measAccInt = interp1(t, measAccCorr(1:k), t(end) - rIMU(4)); % TODO: check constraint for Td
 
 % Initialization
-F = [1 tIMU 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1];
-Q = [0 0 0 0; 0 tIMU*sigmaAcc^2 0 0; 0 0 0 0; 0 0 0 0];
+F = [1 tIMU 0 0; 0 1 tIMU 0; 0 0 1 0; 0 0 0 1];
+Q = [0 0 0 0; 0 (tIMU^2)*sigmaAcc^2 0 0; 0 0 sigmaAcc^2 0; 0 0 0 0];
 
 if(~isnan(pGNSS)) % If GNSS position is available  
     H = [1 0 0 -rIMU(2)];
@@ -28,9 +28,20 @@ if(~isnan(pGNSS)) % If GNSS position is available
     piFactor = (1/4)*(measAccInt^2)*(3*(PEst(4,4)^2) - 2*(expX(4)^4));
     gammaFactor = (PEst(4,4)*expX + 2*expX(4)*(PEst(1:4,4) - expX(4)*expX))*(measAccInt/2);
     
+    % Move rIMU to k-Td
+    Ftd = [1 -rIMU(4) 0 0; 0 1 -rIMU(4) 0; 0 0 1 0; 0 0 0 1];
+    rIMUtd = Ftd * rIMU;
+    
+    % Update rIMU with xEst at k-Td
     xEst = Kp*(z - d);
-    rIMU = rIMU + xEst;
+    rIMUtd = rIMUtd + xEst;
     PEst = PEst + Kp*R*Kp' + Kp*piFactor*Kp' - F*gammaFactor*Kp' - Kp*gammaFactor'*F';
+    
+    % Move updated rIMU from k-Td to k
+    Ftd = [1 rIMU(4) 0 0; 0 1 rIMU(4) 0; 0 0 1 0; 0 0 0 1];
+    Qtd = [0 0 0 0; 0 rIMU(4)*sigmaAcc^2 0 0; 0 0 0 0; 0 0 0 0];
+    rIMU = Ftd*rIMUtd;
+    PEst = Ftd*PEst*Ftd' + Qtd;
 end
 
 % Sensor error compensation
@@ -40,13 +51,10 @@ rIMU(2) = rIMU(2) + measAccCorr(k) * tIMU;
 rIMU(1) = rIMU(1) + rIMU(2) * tIMU;
 % Sensor error update
 rIMU(3) = rIMU(3);
+% Delay error update
+rIMU(4) = rIMU(4);
 
 % Covariance prediction
 PEst = F*PEst*F' + Q;
-    
-%     % Correction from t-Td to t
-%     F = [1 rInt(4) 0; 0 1 0; 0 0 1];
-%     xEst = F*xEst;
-%     PEst = F*PEst*F' + Q;
 
 end

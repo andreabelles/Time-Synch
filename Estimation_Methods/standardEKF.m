@@ -8,7 +8,7 @@ function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, sigmaAcc, 
 
 if (~isnan(pGNSS)) % If GNSS position is available
     H = [1 0 0];
-    R = [sigmaGNSS^2];
+    R = [(sigmaGNSS)^2];
     K = (PEst*H')/(H*PEst*H' + R);
     z = pGNSS - H*rIMU;
     xEst = K*z;
@@ -18,7 +18,7 @@ end
 
 % Initialization
 F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
-Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 0];
+Q = [0 0 0; 0 (tIMU^2)*sigmaAcc^2 0; 0 0 sigmaAcc^2];
     
 % Sensor error compensation
 measAccCorr = measAcc + rIMU(3);

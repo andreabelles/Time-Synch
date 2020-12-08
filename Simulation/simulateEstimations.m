@@ -38,7 +38,7 @@ for k = 2:1:nPts
     % IMU measurements generation
     measAcc(k) = a0 + normrnd(0,sigmaAcc);
     % GNSS measurements generation
-    if mod(k,M) == 0
+    if mod(k,M) == 0 && (k - tDelay/tIMU)>0
         pGNSS(k) = p(k - tDelay/tIMU) + normrnd(0,sigmaGNSS);
     end
     % Strapdown equations
