@@ -29,6 +29,7 @@ if(~isnan(pGNSS)) % If GNSS position is available
     gammaFactor = (PEst(4,4)*expX + 2*expX(4)*(PEst(1:4,4) - expX(4)*expX))*(measAccInt/2);
     
     % Move rIMU to k-Td
+    %% Authors are not sure about the next two lines:
     Ftd = [1 -rIMU(4) 0 0; 0 1 -rIMU(4) 0; 0 0 1 0; 0 0 0 1];
     rIMUtd = Ftd * rIMU;
     
