@@ -4,7 +4,7 @@
 tEnd:           60      # seconds   End time of the simulation
 fIMU:           100     # Hz        IMU and EKF rate
 fGNSS:          1       # Hz        GNSS rate
-tDelay:         2.2     # seconds   GNSS observations delay
+tDelay:         0.2     # seconds   GNSS observations delay
 #
 sigmaAcc:       0.2     # m/s^2     STD of the accelerometer
 sigmaGNSS:      1       # m         STD of the GNSS module
