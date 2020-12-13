@@ -1,4 +1,4 @@
-function v = lagrangeInterp(t, y, D, maxN)
+function v = lagrangeInterp(t, y, D)
 
 %% Find index in t closest to delay D
 [~, closestIndex] = min(abs(D - t.'));

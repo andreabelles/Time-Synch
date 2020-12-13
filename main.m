@@ -11,7 +11,7 @@ rp0, rv0, rba0, rt0, sigmaPos, sigmaVel, sigmaAccBias, sigmaTd]         ...
 [tspan, p, v, a] = generateTrajectory(p0, v0, a0, tIMU, tEnd);
 
 %% Generation of measurements and EKF
-[pIMU, vIMU, pGNSS, rIntEKF, PEKF, rIntSkog, PSkog] = simulateEstimations(          ...
+[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog] = simulateEstimations(          ...
                                                         p, tspan, M, tIMU, tDelay,  ...
                                                         p0, v0, a0,                 ...
                                                         rp0, rv0, rba0, rt0,        ...
@@ -20,12 +20,12 @@ rp0, rv0, rba0, rt0, sigmaPos, sigmaVel, sigmaAccBias, sigmaTd]         ...
 
 %% Results
 tVec        = 0:tIMU:tEnd;
-pIntEKF     = rIntEKF(1, :);
-vIntEKF     = rIntEKF(2, :);
-bIntEKF     = rIntEKF(3, :);
-pIntSkog    = rIntSkog(1, :);
-vIntSkog    = rIntSkog(2, :);
-bIntSkog    = rIntSkog(3, :);
+pIntEKF     = xEKF(1, :);
+vIntEKF     = xEKF(2, :);
+bIntEKF     = xEKF(3, :);
+pIntSkog    = xSkog(1, :);
+vIntSkog    = xSkog(2, :);
+bIntSkog    = xSkog(3, :);
 % Computation of errors
 errPosIMU   = abs(p - pIMU);
 errVelIMU   = v - vIMU;

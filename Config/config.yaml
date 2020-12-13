@@ -17,7 +17,7 @@ p0:             0       # m         Initial position
 rp0:             0      # m         Initial position
 rv0:             1      # m/s       Initial velocity 
 rba0:            0      # m/s^2     Initial acceleration bias 
-rt0:             0      # s         Initial time delay 
+rt0:             0.02  # s         Initial time delay 
 
 # COVARIANCE MATRIX INITIALIZATION
 sigmaPos:       1       # m         Initial STD of the position error
