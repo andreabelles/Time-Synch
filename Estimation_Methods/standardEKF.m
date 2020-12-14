@@ -19,7 +19,7 @@ end
 % Initialization
 F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
 Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 tIMU*sigmaAcc^2];
-    
+
 % Sensor error compensation
 measAccCorr = measAcc + rIMU(3);
 % Strapdown equations updated

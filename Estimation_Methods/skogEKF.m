@@ -17,7 +17,7 @@ measAccInt = interp1(t, measAccCorr(1:k), t(end) - rIMU(4)); % TODO: check const
 F = [1 tIMU 0 0; 0 1 tIMU 0; 0 0 1 0; 0 0 0 1];
 Q = [0 0 0 0; 0 (tIMU^2)*sigmaAcc^2 0 0; 0 0 sigmaAcc^2 0; 0 0 0 0];
 
-if(~isnan(pGNSS)) % If GNSS position is available  
+if(~isnan(pGNSS)) % If GNSS position is available
     H = [1 0 0 -rIMU(2)];
     R = [sigmaGNSS^2];
     K = (PEst*H')/(H*PEst*H' + R);
@@ -29,7 +29,6 @@ if(~isnan(pGNSS)) % If GNSS position is available
     gammaFactor = (PEst(4,4)*expX + 2*expX(4)*(PEst(1:4,4) - expX(4)*expX))*(measAccInt/2);
     
     % Move rIMU to k-Td
-    %% Authors are not sure about the next two lines:
     Ftd = [1 -rIMU(4) 0 0; 0 1 -rIMU(4) 0; 0 0 1 0; 0 0 0 1];
     rIMUtd = Ftd * rIMU;
     
