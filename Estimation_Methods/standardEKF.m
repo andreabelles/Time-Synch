@@ -1,5 +1,7 @@
-function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, sigmaAcc, sigmaGNSS)
-% EKF:  This function estimates the position and velocity using an EKF. 
+function [xEst, PEst] = standardEKF(xOld, POld, pGNSS, measAcc, tIMU, sigmaAcc, sigmaGNSS)
+% EKF:  This function estimates the position, velocity and bias based on state-augmented KF
+%           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
+%           Inertial Navigation Systems (see Table 1). 
 %
 % Inputs:   pIMU:   Position estimated by the IMU
 %           pIMU:   Position estimated by the IMU
@@ -9,26 +11,25 @@ function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, sigmaAcc, 
 if (~isnan(pGNSS)) % If GNSS position is available
     H = [1 0 0];
     R = [(sigmaGNSS)^2];
-    K = (PEst*H')/(H*PEst*H' + R);
-    z = pGNSS - H*rIMU;
-    xEst = K*z;
-    rIMU = rIMU + xEst;
-    PEst = PEst - K*H*PEst;
+    K = (POld*H')/(H*POld*H' + R);
+    z = pGNSS - H*xOld;
+    xOld = xOld + K*z;
+    POld = POld - K*H*POld;
 end
 
 % Initialization
 F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
-Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 tIMU*sigmaAcc^2];
-
+Q = [0 0 0; 0 (tIMU)*sigmaAcc^2 0; 0 0 (tIMU)*sigmaAcc^2];
+    
 % Sensor error compensation
-measAccCorr = measAcc + rIMU(3);
+measAccCorr = measAcc + xOld(3);
 % Strapdown equations updated
-rIMU(2) = rIMU(2) + measAccCorr * tIMU;
-rIMU(1) = rIMU(1) + rIMU(2) * tIMU;
+xEst(2) = xOld(2) + measAccCorr * tIMU;
+xEst(1) = xOld(1) + xOld(2) * tIMU;
 % Sensor error update
-rIMU(3) = rIMU(3);
+xEst(3) = xOld(3);
 
 % Covariance prediction
-PEst = F*PEst*F' + Q;
+PEst = F*POld*F' + Q;
 
 end
