@@ -1,5 +1,5 @@
 function [xPredicted, PPredicted, measAccCorr] = ...
-    skogEKF(xHistoric, PHistoric, pGNSS, measAcc, measAccCorr, k, tspan, tIMU, sigmaAcc, sigmaGNSS)
+    skogEKF(xHistoric, PHistoric, pGNSS, measAcc, measAccCorr, k, tspan, tIMU, Config)
 % skogEKF:  This function estimates the position, velocity, bias and time delay based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided Inertial Navigation Systems.
 %           This algorithm has been modified to estimate a total-state instead of an error-state KF and also to 
@@ -42,8 +42,8 @@ if(~isnan(pGNSS)) % If GNSS position is available
     
     % Strapdown equations to obtain state vector prediction at time delay (k-Td)
     xPredAtDelay = zeros(4,1);
-    xPredAtDelay(2) = xPrevDelay(2) + measAccInt * timeToDelay;
-    xPredAtDelay(1) = xPrevDelay(1) + xPrevDelay(2) * timeToDelay;
+    xPredAtDelay(2) = xPrevDelay(2) + 0.5 * (measAccInt + measAccCorr(prevIndex)) * timeToDelay;
+    xPredAtDelay(1) = xPrevDelay(1) + 0.5 * (xPrevDelay(2) + xPredAtDelay(2)) * timeToDelay;
     % Sensor error update
     xPredAtDelay(3) = xPrevDelay(3);
     % Delay error update
@@ -51,7 +51,8 @@ if(~isnan(pGNSS)) % If GNSS position is available
     
     % Covariance matrix prediction at time delay (k-Td)
     FtimeToDelay = [1 timeToDelay 0 0; 0 1 timeToDelay 0; 0 0 1 0; 0 0 0 1];
-    QtimeToDelay = [0 0 0 0; 0 (timeToDelay^2)*sigmaAcc^2 0 0; 0 0 sigmaAcc^2 0; 0 0 0 0];
+    QtimeToDelay = [0 0 0 0; 0 timeToDelay*Config.varAccNoise 0 0; 0 0 timeToDelay*Config.varAccBiasNoise 0; 0 0 0 0];
+
     PPredAtDelay = FtimeToDelay*PPrevDelay*FtimeToDelay' + QtimeToDelay; % P at k-Td
  
 %     %% Interpolate rIMU from k-1 to k-Td
@@ -62,7 +63,7 @@ if(~isnan(pGNSS)) % If GNSS position is available
     
     %% Update at k-Td using GNSS measurements
     H = [1 0 0 -xPredAtDelay(2)]; % Eq. (21)
-    R = [sigmaGNSS^2]; 
+    R = [Config.varPosGNSS]; 
     K = (PPredAtDelay*H')/(H*PPredAtDelay*H' + R); % From Table 1
     z = pGNSS - H * xPredAtDelay(:); % Eq. (20)
     Kp = FtimeToDelay*K; % From eq. (5) and (6)
@@ -82,9 +83,9 @@ if(~isnan(pGNSS)) % If GNSS position is available
                     0 0 0 1];
                 
     QDelaytoOld     = [ 0 0 0 0;                        ...
-                    0 xOld(4)*sigmaAcc^2 0 0;   ...
-                    0 0 0 0;                        ...
-                    0 0 0 0];
+                    0 xOld(4)*Config.varAccNoise 0 0;   ...
+                    0 0 tIMU*Config.varAccBiasNoise 0;                        ...
+                    0 0 0 tIMU*Config.varDelayProcessNoise];
                 
     xOld        = FDelaytoOld * xUpdatedAtDelay;
     POld        = FDelaytoOld*PUpdatedAtDelay*FDelaytoOld' + QDelaytoOld;
@@ -92,8 +93,8 @@ end
 
 %% Predict state vector and covariance matrix from k-1 to k
 % Strapdown equations for new prediction from Table 1. 
-xPredicted(2) = xOld(2) + measAccCorr(k) * tIMU;
-xPredicted(1) = xOld(1) + xOld(2) * tIMU;
+xPredicted(2) = xOld(2) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * tIMU;
+xPredicted(1) = xOld(1) + 0.5 * (xOld(2) + xPredicted(2)) * tIMU;
 % Sensor error update
 xPredicted(3) = xOld(3);
 % Delay error update
@@ -101,7 +102,7 @@ xPredicted(4) = xOld(4);
 
 % Initialization matrices
 F = [1 tIMU 0 0; 0 1 tIMU 0; 0 0 1 0; 0 0 0 1];
-Q = [0 0 0 0; 0 (tIMU^2)*sigmaAcc^2 0 0; 0 0 sigmaAcc^2 0; 0 0 0 0];
+Q = [0 0 0 0; 0 tIMU*Config.varAccNoise 0 0; 0 0 tIMU*Config.varAccBiasNoise 0; 0 0 0 tIMU*Config.varDelayProcessNoise]; 
 PPredicted = F*POld*F' + Q; % Covariance prediction from Table 1
 
 end

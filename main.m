@@ -3,23 +3,16 @@ addpath(genpath('./'));
 % Time Synchronization GNSS-aided IMU project
 % (Description of the project here)
 
-[tEnd, tIMU, tGNSS, tDelay, M, sigmaAcc, sigmaGNSS, a0, v0, p0,         ...
-rp0, rv0, rba0, rt0, sigmaPos, sigmaVel, sigmaAccBias, sigmaTd]         ...
-    = loadConfigFile();
+Config = loadConfigFile();
 
 %% Generation of true trajectory
-[tspan, p, v, a] = generateTrajectory(p0, v0, a0, tIMU, tEnd);
+[tspan, trueTrajectory] = generateTrajectory(Config);
 
 %% Generation of measurements and EKF
-[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog] = simulateEstimations(          ...
-                                                        p, tspan, M, tIMU, tDelay,  ...
-                                                        p0, v0, a0,                 ...
-                                                        rp0, rv0, rba0, rt0,        ...
-                                                        sigmaGNSS, sigmaAcc,        ...
-                                                        sigmaPos, sigmaVel, sigmaAccBias, sigmaTd);
+[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog] = simulateEstimations(trueTrajectory, tspan, Config);
 
 %% Results
-tVec        = 0:tIMU:tEnd;
+tVec        = 0:Config.tIMU:Config.tEnd;
 pIntEKF     = xEKF(1, :);
 vIntEKF     = xEKF(2, :);
 bIntEKF     = xEKF(3, :);
@@ -37,6 +30,18 @@ errVelSkog  = v - vIntSkog';
 
 
 %% Plots
+
+% True trajectory vs measurements
+figure;
+plot(pEast, pNorth, '.k') 
+xlabel('East (m)'); ylabel('North (m)')
+title('True trajectory');
+
+figure;
+plot(tVec, heading, '.k') 
+xlabel('Time (s)'); ylabel('Heading (deg)')
+title('Heading');
+
 % True trajectory vs measurements
 figure;
 plot(tVec, p, 'k-', 'Linewidth', 1); hold on;

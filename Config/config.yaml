@@ -5,22 +5,37 @@ tEnd:           60      # seconds   End time of the simulation
 fIMU:           100     # Hz        IMU and EKF rate
 fGNSS:          1       # Hz        GNSS rate
 tDelay:         0.2     # seconds   GNSS observations delay
-#
-sigmaAcc:       0.2     # m/s^2     STD of the accelerometer
-sigmaGNSS:      1       # m         STD of the GNSS module
+# IMU SENSORS NOISE:
+varAccNoise:           0.001    # m^2/s^3   Variance of the accelerometer
+varAccBiasNoise:       0.001    # m^2/s^5   Variance of the accelerometer bias
+varGyroNoise:          0.001    # deg^2/s   Variance of the gyroscope
+varGyroBiasNoise:      0.001    # deg^2/s^3 Variance of the gyroscope bias
+varDelayProcessNoise:  0        # s         Variance of process noise of the delay
+# GNSS MEASUREMENT NOISE:
+varPosGNSS:            1        # m^2      Variance of the GNSS position measurement
+
 # 
-a0:             0       # m/s^2     Initial acceleration
+a0:             30       # m/s^2     Initial acceleration
 v0:             1       # m/s       Initial velocity
-p0:             0       # m         Initial position
+pNorth0:        0       # m         Initial North position
+pEast0:         0       # m         Initial East position
+headingRate0:   40       # deg/s     Initial angular velocity
+heading0:       45      # deg       Initial heading
 
-# NAVIGATION SOLUTION VECTOR INITIALIZATION
-rp0:             0      # m         Initial position
-rv0:             1      # m/s       Initial velocity 
-rba0:            0      # m/s^2     Initial acceleration bias 
-rt0:             0.02  # s         Initial time delay 
-
+# LOOSELY COOPLED INTEGRATION:
+# STATE VECTOR INITIALIZATION
+xpNorth0:        20      # m         Initial North position
+xpEast0:         20      # m         Initial East position
+xv0:             10      # m/s       Initial velocity 
+xheading0:       5       # deg       Initial heading angle
+xba0:            0      # m/s^2     Initial acceleration bias
+xbg0:            0      # deg/s     Initial gyroscope bias
+xt0:             0.02   # s         Initial time delay 
 # COVARIANCE MATRIX INITIALIZATION
-sigmaPos:       1       # m         Initial STD of the position error
-sigmaVel:       2       # m/s       Initial STD of the velocity error
-sigmaAccBias:   0.002   # m/s^2     Initial STD of the acceleration bias error
-sigmaTd:        0.01    # s         Initial STD of the time delay error
+sigmaInitNorthPos:  0.5     # m       Initial STD of the North position error
+sigmaInitEastPos:   0.5     # m       Initial STD of the East position error
+sigmaInitVel:       2       # m/s     Initial STD of the velocity error
+sigmaInitHeading:   3       # deg     Initial STD of the heading error
+sigmaInitAccBias:   0.002   # m/s^2   Initial STD of the acceleration bias error
+sigmaInitGyroBias:   0.002   # deg/s   Initial STD of the gyroscope bias error
+sigmaInitDelay:     0.01    # s       Initial STD of the time delay error
