@@ -10,8 +10,9 @@ function [xEst, PEst, measAccCorr] = standardEKF(xOld, POld, pGNSS, measAcc, mea
 % Outputs:  delta x:      Error state vector estimation
 
 if (~isnan(pGNSS)) % If GNSS position is available
-    H = [1 0 0];
-    R = [Config.varPosGNSS];
+    H = [1 0 0 0 0 0;   ...
+         0 1 0 0 0 0];
+    R = diag([Config.varPosGNSS Config.varPosGNSS]);
     K = (POld*H')/(H*POld*H' + R);
     z = pGNSS - H*xOld;
     xOld = xOld + K*z;
@@ -19,13 +20,14 @@ if (~isnan(pGNSS)) % If GNSS position is available
 end
 
 % Initialization
-F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
-% F = [1 0 tIMU*cos(xOld(4)) 0 0 0;   ...
+% F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
+% F = [1 0 tIMU*cos(xOld(4)) 0 0 0;   ...   %%%% TODO: find correct F %%%%
 %      0 1 tIMU*sin(xOld(4)) 0 0 0;   ...
 %      0 0 1 0 0 0;                   ...
 %      0 0 0 1 0 0;                   ...
 %      0 0 0 0 1 0;                   ...
-%      0 0 0 0 0 1                    ];
+%      0 0 0 0 0 1];
+ 
 Q = [0 0 0; 0 tIMU*Config.varAccNoise 0; 0 0 tIMU*Config.varAccBiasNoise];
     
 % Sensor error compensation
