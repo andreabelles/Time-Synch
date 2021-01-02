@@ -1,5 +1,9 @@
-function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, sigmaAcc, sigmaGNSS)
-% EKF:  This function estimates the position and velocity using an EKF. 
+function [xEst, PEst, measAccCorr, measGyroCorr] = ...
+    standardEKF(xOld, POld, pGNSS, measAcc, measAccCorrOld, measGyro, measGyroCorrOld, tIMU, Config)
+
+% EKF:  This function estimates the position, velocity and bias based on state-augmented KF
+%           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
+%           Inertial Navigation Systems (see Table 1). 
 %
 % Inputs:   pIMU:   Position estimated by the IMU
 %           pIMU:   Position estimated by the IMU
@@ -7,28 +11,43 @@ function [rIMU, PEst] = standardEKF(rIMU, PEst, pGNSS, measAcc, tIMU, sigmaAcc, 
 % Outputs:  delta x:      Error state vector estimation
 
 if (~isnan(pGNSS)) % If GNSS position is available
-    H = [1 0 0];
-    R = [sigmaGNSS^2];
-    K = (PEst*H')/(H*PEst*H' + R);
-    z = pGNSS - H*rIMU;
-    xEst = K*z;
-    rIMU = rIMU + xEst;
-    PEst = PEst - K*H*PEst;
+    H = [1 0 0 0 0 0;   ...
+         0 1 0 0 0 0];
+    R = diag([Config.varPosGNSS Config.varPosGNSS]);
+    K = (POld*H')/(H*POld*H' + R);
+    z = pGNSS - H*xOld;
+    xOld = xOld + K*z;
+    POld = POld - K*H*POld;
 end
 
 % Initialization
-F = [1 tIMU 0; 0 1 tIMU; 0 0 1];
-Q = [0 0 0; 0 tIMU*sigmaAcc^2 0; 0 0 0];
+F       = eye(6);
+F(1, 3) = tIMU*cosd(xOld(4));               % d PNorth / d vAT
+F(1, 4) = -tIMU*xOld(3)*sind(xOld(4));      % d PNorth / d heading
+F(2, 3) = tIMU*sind(xOld(4));               % d PEast / d vAT
+F(2, 4) = tIMU*xOld(3)*cosd(xOld(4));       % d PEast / d heading
+F(3, 5) = tIMU;                             % d vAT / d biasAcc
+F(4, 6) = tIMU;                             % d heading / d biasGyro
+ 
+Q       = zeros(6);
+Q(3, 3) = Config.varAccNoise * tIMU;        % Along-Track Velocity
+Q(4, 4) = Config.varGyroNoise * tIMU;       % Heading
+Q(5, 5) = Config.varAccBiasNoise * tIMU;    % Accelerometer bias (error)
+Q(6, 6) = Config.varGyroBiasNoise * tIMU;   % Gyroscope bias (error)
     
 % Sensor error compensation
-measAccCorr = measAcc + rIMU(3);
+measAccCorr = measAcc + xOld(5);
+measGyroCorr = measGyro + xOld(6);
 % Strapdown equations updated
-rIMU(2) = rIMU(2) + measAccCorr * tIMU;
-rIMU(1) = rIMU(1) + rIMU(2) * tIMU;
-% Sensor error update
-rIMU(3) = rIMU(3);
+xEst(3) = xOld(3) + 0.5 * (measAccCorr + measAccCorrOld) * tIMU;
+xEst(4) = xOld(4) + 0.5 * (measGyroCorr + measGyroCorrOld) * tIMU;
+xEst(1) = xOld(1) + 0.5 * (xEst(3) + xOld(3)) * cosd(xOld(4)) * tIMU;
+xEst(2) = xOld(2) + 0.5 * (xEst(3) + xOld(3)) * sind(xOld(4)) * tIMU;      % TODO: check this, average heading?
+% % Sensor error update
+xEst(5) = xOld(5);
+xEst(6) = xOld(6);
 
 % Covariance prediction
-PEst = F*PEst*F' + Q;
+PEst = F*POld*F' + Q;
 
 end

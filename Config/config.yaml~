@@ -8,7 +8,7 @@ tDelay:                 0.2     # seconds   GNSS observations delay
 # IMU SENSORS NOISE:
 varAccNoise:            0.01    # m^2/s^3   Variance of the accelerometer
 varAccBiasNoise:        0.001   # m^2/s^5   Variance of the accelerometer bias
-varGyroNoise:           0.1       # deg^2/s   Variance of the gyroscope
+varGyroNoise:           5       # deg^2/s   Variance of the gyroscope
 varGyroBiasNoise:       0.001   # deg^2/s^3 Variance of the gyroscope bias
 varDelayProcessNoise:   0       # s         Variance of process noise of the delay
 # GNSS MEASUREMENT NOISE:
