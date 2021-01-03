@@ -4,7 +4,7 @@
 tEnd:                   120      # seconds   End time of the simulation
 fIMU:                   100     # Hz        IMU and EKF rate
 fGNSS:                  1       # Hz        GNSS rate
-tDelay:                 0.2     # seconds   GNSS observations delay
+tDelay:                 0     # seconds   GNSS observations delay
 # IMU SENSORS NOISE:
 varAccNoise:            0.01    # m^2/s^3   Variance of the accelerometer
 varAccBiasNoise:        0.001   # m^2/s^5   Variance of the accelerometer bias
@@ -23,14 +23,14 @@ headingRate0:           0       # deg/s     Initial angular velocity
 heading0:               45      # deg       Initial heading
 
 # LOOSELY COOPLED INTEGRATION:
-# STATE VECTOR INITIALIZATION
-xpNorth0:               20      # m         Initial North position
-xpEast0:                20      # m         Initial East position
-xv0:                    10      # m/s       Initial velocity 
-xheading0:              45      # deg       Initial heading angle
-xba0:                   0       # m/s^2     Initial acceleration bias
-xbg0:                   0       # deg/s     Initial gyroscope bias
-xt0:                    0.02    # s         Initial time delay 
+# ERROR-STATE VECTOR INITIALIZATION
+xErrpNorth0:               20      # m         Initial North position error
+xErrpEast0:                20      # m         Initial East position error
+xErrv0:                    10      # m/s       Initial velocity error 
+xErrheading0:              45      # deg       Initial heading angle error
+xErrba0:                   0       # m/s^2     Initial acceleration bias error
+xErrbg0:                   0       # deg/s     Initial gyroscope bias error
+xErrt0:                    0.02    # s         Initial time delay error
 # COVARIANCE MATRIX INITIALIZATION
 sigmaInitNorthPos:      0.5     # m         Initial STD of the North position error
 sigmaInitEastPos:       0.5     # m         Initial STD of the East position error
