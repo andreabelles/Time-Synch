@@ -1,4 +1,5 @@
-function [estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkogPresent, PSkog] = simulateEstimations(trueTrajectory, tspan, Config)
+function [estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkogPresent, estIntSkogPast, PSkogPresent, PSkogPast] = ...
+            simulateEstimations(trueTrajectory, tspan, Config)
 
 %% Initializations
 pTrue = trueTrajectory(:,1:2);

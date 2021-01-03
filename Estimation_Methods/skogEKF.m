@@ -19,16 +19,17 @@ estIntOld.vel       = estIntHistoric.vel(epoch-1);
 estIntOld.heading   = estIntHistoric.heading(epoch-1);
 estIntOld.biasAcc   = estIntHistoric.biasAcc(epoch-1);
 estIntOld.biasGyro  = estIntHistoric.biasGyro(epoch-1);
-estIntOld.timeDelay     = estIntHistoric.timeDelay(epoch-1);
+estIntOld.timeDelay = estIntHistoric.timeDelay(epoch-1);
 
 POld       = PHistoric(:, :, epoch-1); 
 
 % Sensor error compensation: Get IMU measurements estimations from IMU measures
-measAccCorr(epoch) = measAcc(epoch) + biasAccEstOld;
-measGyroCorr(epoch) = measGyro(epoch) + biasGyroEstOld;
+measAccCorr(epoch) = measAcc(epoch) + estIntOld.biasAcc;
+measGyroCorr(epoch) = measGyro(epoch) + estIntOld.biasGyro;
 
 % Navigation equations computation: Update corrected inertial navigation solution
-[estIntSkogPresent] = navigationEquations(measGyroCorr, measAccCorr,  estIntOld, epoch, tIMU);
+[estIntSkogPresent] = navigationEquations(measGyroCorr(epoch), measAccCorr(epoch), estIntHistoric, epoch, tIMU);
+estIntSkogPresent.timeDelay(epoch) = estIntOld.timeDelay;
 
 % Initialization
 x0         = zeros(7,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasAcc BiasGyro timeDelay]
@@ -36,10 +37,10 @@ x0         = zeros(7,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasA
 
 % Continuous-time state transition model
 F       = zeros(7);
-F(1, 3) = cosd(estInt.heading(epoch));                              % d PNorth / d vAT
-F(1, 4) = -estInt.vel(epoch)*sind(estInt.heading(epoch));       % d PNorth / d heading
-F(2, 3) = sind(estInt.heading(epoch));                              % d PEast / d vAT
-F(2, 4) = estInt.vel(epoch)*cosd(estInt.heading(epoch));        % d PEast / d heading
+F(1, 3) = cosd(estIntSkogPresent.heading(epoch));                              % d PNorth / d vAT
+F(1, 4) = -estIntSkogPresent.vel(epoch)*sind(estIntSkogPresent.heading(epoch));       % d PNorth / d heading
+F(2, 3) = sind(estIntSkogPresent.heading(epoch));                              % d PEast / d vAT
+F(2, 4) = estIntSkogPresent.vel(epoch)*cosd(estIntSkogPresent.heading(epoch));        % d PEast / d heading
 F(3, 5) = 1;                                                            % d vAT / biasAcc
 F(4, 6) = 1;                                                            % d heading / biasGyro
  
@@ -62,7 +63,7 @@ P = Fk * POld * Fk' + Qk;
 
 if(~isnan(pGNSS)) % If GNSS position is available
     %% Interpolate accelerometer measurement from epoch to epoch-Td
-    timeAtDelay = tspan(epoch-1) - timeDelayEstOld;
+    timeAtDelay = tspan(epoch-1) - estIntSkogPresent.timeDelay(epoch);
     % Extracted from Eq. (24) and reference paper [22]. 
     measAccInt = lagrangeInterp(tspan(1:epoch), measAccCorr(1:epoch), timeAtDelay); % TODO: check constraint for Td
     measGyroInt = lagrangeInterp(tspan(1:epoch), measGyroCorr(1:epoch), timeAtDelay); % TODO: check constraint for Td
@@ -92,11 +93,11 @@ if(~isnan(pGNSS)) % If GNSS position is available
     
     % Strapdown equations to obtain state vector prediction at time delay (epoch-Td)
     estPredAtDelay.headingRate = measGyroInt;                                                                         % Heading Rate
-    estPredAtDelay.heading = estPrevDelay.heading + 0.5 * (estPredAtDelay.headingRate + estPrevDelay.headingRate) * timeToDelay;                      % Heanding angle
+    estPredAtDelay.heading = estPrevDelay.heading + 0.5 * (estPredAtDelay.headingRate + estPrevDelay.headingRate) * timeToDelay;   % Heanding angle
     estPredAtDelay.acc = measAccInt;                                                                          % Acceleration
     estPredAtDelay.vel = estPrevDelay.vel + 0.5 * (estPredAtDelay.acc + estPrevDelay.acc) * timeToDelay;                            % Velocity
-    estPredAtDelay.pos(1) = estPrevDelay.pos(1) + 0.5 * (estPredAtDelay.vel + estPrevDelay.vel) * cosd(estPredAtDelay.heading) * timeToDelay;     % North position
-    estPredAtDelay.pos(2) = estPrevDelay.pos(2) + 0.5 * (estPredAtDelay.vel + estPrevDelay.vel) * sind(estPredAtDelay.heading) * timeToDelay;     % East position
+    estPredAtDelay.pos(1) = estPrevDelay.pos(1) + 0.5 * (estPredAtDelay.vel + estPrevDelay.vel) * cosd(estPredAtDelay.heading) * timeToDelay;  % North position
+    estPredAtDelay.pos(2) = estPrevDelay.pos(2) + 0.5 * (estPredAtDelay.vel + estPrevDelay.vel) * sind(estPredAtDelay.heading) * timeToDelay;  % East position
     estPredAtDelay.biasAcc   = estPrevDelay.biasAcc;
     estPredAtDelay.biasGyro  = estPrevDelay.biasGyro;
     estPredAtDelay.timeDelay  = estPrevDelay.timeDelay;
@@ -170,8 +171,8 @@ if(~isnan(pGNSS)) % If GNSS position is available
     FDelaytoEpoch(4, 6) = 1;                                                            % d heading / biasGyro
     
     % Discrete-time state transition model
-    FkDelaytoEpoch       = eye(7) + estUpdatedAtDelay.timeDelay(epoch)*FDelaytoEpoch; % Taylor expansion 1st order
-    QkDelaytoEpoch       = estUpdatedAtDelay.timeDelay(epoch)*Q;
+    FkDelaytoEpoch       = eye(7) + estUpdatedAtDelay.timeDelay*FDelaytoEpoch; % Taylor expansion 1st order
+    QkDelaytoEpoch       = estUpdatedAtDelay.timeDelay*Q;
 
     % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1) 
     x = FkDelaytoEpoch * xUpdatedAtDelay; % X_k|k-1 = F_k*X_k-1|k-1 % state vector updated at epoch
@@ -187,14 +188,15 @@ if(~isnan(pGNSS)) % If GNSS position is available
     estIntSkogPast.timeDelay(epoch) = estUpdatedAtDelay.timeDelay; % Time Delay estimation 
     covIntSkogPast(:,:,epoch) = PUpdatedAtDelay;
 end
-     %% CLOSED LOOP CORRECTION
-    % GNSS/INS Integration navigation solution at epoch
-    % Output variables in the present
-    estIntSkogPresent.pos(epoch,:) = estIntSkogPresent.pos + x(1:2)';
-    estIntSkogPresent.vel(epoch) = estIntSkogPresent.vel + x(3);
-    estIntSkogPresent.heading(epoch) = estIntSkogPresent.heading + x(4);
-    estIntSkogPresent.biasAcc(epoch) = x(5); % Bias Acc estimation
-    estIntSkogPresent.biasGyro(epoch) = x(6); % Bias Gyro estimation
-    estIntSkogPresent.timeDelay(epoch) = estIntSkogPresent.timeDelay + x(7); % Time Delay estimation
-    covIntSkogPresent(:,:,epoch) = P;   
+
+%% CLOSED LOOP CORRECTION
+% GNSS/INS Integration navigation solution at epoch
+% Output variables in the present
+estIntSkogPresent.pos(epoch,:) = estIntSkogPresent.pos(epoch,:) + x(1:2)';
+estIntSkogPresent.vel(epoch) = estIntSkogPresent.vel(epoch) + x(3);
+estIntSkogPresent.heading(epoch) = estIntSkogPresent.heading(epoch) + x(4);
+estIntSkogPresent.biasAcc(epoch) = x(5); % Bias Acc estimation
+estIntSkogPresent.biasGyro(epoch) = x(6); % Bias Gyro estimation
+estIntSkogPresent.timeDelay(epoch) = estIntSkogPresent.timeDelay(epoch) + x(7); % Time Delay estimation
+covIntSkogPresent(:,:,epoch) = P;   
 end
