@@ -70,7 +70,7 @@ end
 estInt.pos(epoch,:) = estIMUCorr.pos(epoch,:) + x(1:2)';
 estInt.vel(epoch) = estIMUCorr.vel(epoch) + x(3);
 estInt.heading(epoch) = estIMUCorr.heading(epoch) + x(4);
-estInt.biasAcc(epoch) = estInt.biasAcc(epoch-1) + x(5);
-estInt.biasGyro(epoch) = estInt.biasGyro(epoch-1) + x(6);
+estInt.biasAcc(epoch) = x(5);%estInt.biasAcc(epoch-1) + x(5);
+estInt.biasGyro(epoch) = x(6);%estInt.biasGyro(epoch-1) + x(6);
 
 end
