@@ -31,10 +31,10 @@ F(3, 5) = 1;                                                            % d vAT 
 F(4, 6) = 1;                                                            % d heading / biasGyro
  
 Q       = zeros(6);
-Q(3, 3) = Config.varAccNoise;        % Along-Track Velocity
+Q(3, 3) = Config.varAccNoise;        % Velocity
 Q(4, 4) = Config.varGyroNoise;       % Heading
-Q(5, 5) = Config.varAccBiasNoise;    % Accelerometer bias (error)
-Q(6, 6) = Config.varGyroBiasNoise;   % Gyroscope bias (error)
+Q(5, 5) = Config.varAccBiasNoise;    % Accelerometer bias
+Q(6, 6) = Config.varGyroBiasNoise;   % Gyroscope bias
 
 % Discrete-time state transition model
 Fk       = eye(6) + tIMU*F; % Taylor expansion 1st order
