@@ -1,5 +1,5 @@
-function [estInt, P, estIMUCorr, measAccCorr, measGyroCorr] = ...
-    standardEKF(estInt, epoch, POld, estIMUCorr, pGNSS, measAcc, measGyro, tIMU, Config)
+function [estInt, P, measAccCorr, measGyroCorr] = ...
+    standardEKF(estInt, epoch, POld, pGNSS, measAcc, measGyro, tIMU, Config)
 
 % EKF:  This function estimates the position, velocity and bias based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
@@ -15,20 +15,20 @@ measAccCorr = measAcc - estInt.biasAcc(epoch-1);
 measGyroCorr = measGyro - estInt.biasGyro(epoch-1);
 
 % Navigation equations computation: Update corrected inertial navigation solution
-[estIMUCorr] = navigationEquations(measGyroCorr, measAccCorr, estIMUCorr, epoch, tIMU);
+[estInt] = navigationEquations(measGyroCorr, measAccCorr, estInt, epoch, tIMU);
 
 % Initialization
-x         = zeros(6,1); % Error-state vector: [dpNorth dpEast dV dHeading dBiasAcc dBiasGyro]
+x         = zeros(6,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasAcc BiasGyro]
 % z            = zeros(size(pGNSS)); % Innovation vector (= 0 if no GNSS measurements available)     
 
 % Continuous-time state transition model
 F       = zeros(6);
-F(1, 3) = cosd(estIMUCorr.heading(epoch));                              % d PNorth / d vAT
-F(1, 4) = -estIMUCorr.vel(epoch)*sind(estIMUCorr.heading(epoch));       % d PNorth / d heading
-F(2, 3) = sind(estIMUCorr.heading(epoch));                              % d PEast / d vAT
-F(2, 4) = estIMUCorr.vel(epoch)*cosd(estIMUCorr.heading(epoch));        % d PEast / d heading
-F(3, 5) = 1;                                                            % d vAT / d biasAcc
-F(4, 6) = 1;                                                            % d heading / d biasGyro
+F(1, 3) = cosd(estInt.heading(epoch));                              % d PNorth / d vAT
+F(1, 4) = -estInt.vel(epoch)*sind(estInt.heading(epoch));       % d PNorth / d heading
+F(2, 3) = sind(estInt.heading(epoch));                              % d PEast / d vAT
+F(2, 4) = estInt.vel(epoch)*cosd(estInt.heading(epoch));        % d PEast / d heading
+F(3, 5) = 1;                                                            % d vAT / biasAcc
+F(4, 6) = 1;                                                            % d heading / biasGyro
  
 Q       = zeros(6);
 Q(3, 3) = Config.varAccNoise;        % Along-Track Velocity
@@ -48,7 +48,7 @@ P = Fk * POld * Fk' + Qk;
 if (~isnan(pGNSS)) % If GNSS position is available
     
     % Measurement model
-    z = pGNSS' - estIMUCorr.pos(epoch,:)'; % Observation vector: GPS - prediction INS 
+    z = pGNSS' - estInt.pos(epoch,:)'; % Observation vector: GPS - prediction INS 
     
     H = [1 0 0 0 0 0;   ...
          0 1 0 0 0 0];
@@ -67,10 +67,10 @@ end
 
 % CLOSED-LOOP CORRECTION
 % GNSS/INS Integration navigation solution
-estInt.pos(epoch,:) = estIMUCorr.pos(epoch,:) + x(1:2)';
-estInt.vel(epoch) = estIMUCorr.vel(epoch) + x(3);
-estInt.heading(epoch) = estIMUCorr.heading(epoch) + x(4);
-estInt.biasAcc(epoch) = x(5);%estInt.biasAcc(epoch-1) + x(5);
-estInt.biasGyro(epoch) = x(6);%estInt.biasGyro(epoch-1) + x(6);
+estInt.pos(epoch,:) = estInt.pos(epoch,:) + x(1:2)';
+estInt.vel(epoch) = estInt.vel(epoch) + x(3);
+estInt.heading(epoch) = estInt.heading(epoch) + x(4);
+estInt.biasAcc(epoch) = x(5); % Bias Acc estimation
+estInt.biasGyro(epoch) = x(6); % Bias Gyro estimation 
 
 end

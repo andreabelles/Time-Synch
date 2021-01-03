@@ -1,4 +1,4 @@
-function [estIMURaw, estIMUCorrEKF, estIntEKF, pGNSS, PEKF, estIntSkog, PSkog] = simulateEstimations(trueTrajectory, tspan, Config)
+function [estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkog, PSkog] = simulateEstimations(trueTrajectory, tspan, Config)
 
 %% Initializations
 pTrue = trueTrajectory(:,1:2);
@@ -23,17 +23,17 @@ estIMURaw.vel(1)            = Config.v0;
 estIMURaw.pos               = zeros(nPts,2); 
 estIMURaw.pos(1, :)         = [Config.pNorth0 Config.pEast0];
 
-% Estimated Inertial Navigation Solution Corrected (IMU Only Corrected): Output variable
-estIMUCorrEKF.headingRate       = zeros(nPts,1);    
-estIMUCorrEKF.headingRate(1)    = Config.headingRate0;
-estIMUCorrEKF.heading           = zeros(nPts,1);    
-estIMUCorrEKF.heading(1)        = Config.heading0;
-estIMUCorrEKF.acc               = zeros(nPts,1);    
-estIMUCorrEKF.acc(1)            = Config.a0;
-estIMUCorrEKF.vel               = zeros(nPts,1);    
-estIMUCorrEKF.vel(1)            = Config.v0;
-estIMUCorrEKF.pos               = zeros(nPts,2);    
-estIMUCorrEKF.pos(1, :)         = [Config.pNorth0 Config.pEast0];
+% % Estimated Inertial Navigation Solution Corrected (IMU Only Corrected): Output variable
+% estIMUCorrEKF.headingRate       = zeros(nPts,1);    
+% estIMUCorrEKF.headingRate(1)    = Config.headingRate0;
+% estIMUCorrEKF.heading           = zeros(nPts,1);    
+% estIMUCorrEKF.heading(1)        = Config.heading0;
+% estIMUCorrEKF.acc               = zeros(nPts,1);    
+% estIMUCorrEKF.acc(1)            = Config.a0;
+% estIMUCorrEKF.vel               = zeros(nPts,1);    
+% estIMUCorrEKF.vel(1)            = Config.v0;
+% estIMUCorrEKF.pos               = zeros(nPts,2);    
+% estIMUCorrEKF.pos(1, :)         = [Config.pNorth0 Config.pEast0];
 
 % Estimated GNSS Navigation Solution (GPS Only): Output variable
 pGNSS   = nan(nPts,2);
@@ -50,15 +50,15 @@ PEKF(:,:,1) = diag([Config.sigmaInitNorthPos^2, ...
 % Standard EKF method:                 
 % Estimated GNSS/INS Integrated Navigation Solution (IMU and GPS): Output variable                
 estIntEKF.pos               = zeros(nPts,2);    
-estIntEKF.pos(1, :)         = [Config.xErrpNorth0 Config.xErrpEast0];
+estIntEKF.pos(1, :)         = [Config.xpNorth0 Config.xpEast0];
 estIntEKF.vel               = zeros(nPts,1);    
-estIntEKF.vel(1)            = Config.xErrv0;
+estIntEKF.vel(1)            = Config.xv0;
 estIntEKF.heading           = zeros(nPts,1);    
-estIntEKF.heading(1)        = Config.xErrheading0;
+estIntEKF.heading(1)        = Config.xheading0;
 estIntEKF.biasAcc           = zeros(nPts,1);    
-estIntEKF.biasAcc(1)        = Config.xErrba0;
+estIntEKF.biasAcc(1)        = Config.xba0;
 estIntEKF.biasGyro           = zeros(nPts,1);    
-estIntEKF.biasGyro(1)        = Config.xErrbg0;
+estIntEKF.biasGyro(1)        = Config.xbg0;
 
 % Skog EKF method: 
 % Parameters and initializations
@@ -73,15 +73,15 @@ PSkog(:,:,1) = diag([Config.sigmaInitNorthPos^2,...
                 
 % Estimated GNSS/INS Integrated Navigation Solution (IMU and GPS): Output variable                
 estIntSkog.pos               = zeros(nPts,2);    
-estIntSkog.pos(1, :)         = [Config.xErrpNorth0 Config.xErrpEast0];
+estIntSkog.pos(1, :)         = [Config.xpNorth0 Config.xpEast0];
 estIntSkog.vel               = zeros(nPts,1);    
-estIntSkog.vel(1)            = Config.xErrv0;
+estIntSkog.vel(1)            = Config.xv0;
 estIntSkog.heading           = zeros(nPts,1);    
-estIntSkog.heading(1)        = Config.xErrheading0;
+estIntSkog.heading(1)        = Config.xheading0;
 estIntSkog.biasAcc           = zeros(nPts,1);    
-estIntSkog.biasAcc(1)        = Config.xErrba0;
+estIntSkog.biasAcc(1)        = Config.xba0;
 estIntSkog.biasGyro           = zeros(nPts,1);    
-estIntSkog.biasGyro(1)        = Config.xErrbg0;
+estIntSkog.biasGyro(1)        = Config.xbg0;
 
 for epoch = 2:1:nPts
     [measAcc(epoch), measGyro(epoch), pGNSS(epoch, :)] = generateMeasurements(pTrue, Config, epoch);
@@ -91,11 +91,10 @@ for epoch = 2:1:nPts
     [estIMURaw] = navigationEquations(measGyro(epoch), measAcc(epoch), estIMURaw, epoch, tIMU);
     
     % Integration GNSS/INS: Standard EKF
-    [estIntEKF, PEKF(:,:,epoch), estIMUCorrEKF, measAccCorrStandard(epoch), measGyroCorrStandard(epoch)] =     ...
+    [estIntEKF, PEKF(:,:,epoch), measAccCorrStandard(epoch), measGyroCorrStandard(epoch)] =     ...
                                             standardEKF(estIntEKF,                ...
                                                         epoch, ...
                                                         PEKF(:,:,epoch-1),              ...
-                                                        estIMUCorrEKF, ...
                                                         pGNSS(epoch,:),                   ...
                                                         measAcc(epoch),                 ...
                                                         measGyro(epoch),                ...
