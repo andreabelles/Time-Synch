@@ -9,28 +9,28 @@ Config = loadConfigFile();
 [tspan, trueTrajectory] = generateTrajectory(Config); % trueTrajectory: [posN, posE, vel, acc, heading, headingRate]
 
 %% Generation of measurements and EKF
-[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog] = simulateEstimations(trueTrajectory, tspan, Config);
+[estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkog, PSkog] = simulateEstimations(trueTrajectory, tspan, Config);
 
 %% Results
 tVec        = 0:Config.tIMU:Config.tEnd;
-pIntEKF     = xEKF(1:2, :);
-vIntEKF     = xEKF(3, :);
-headIntEKF  = xEKF(4, :);
-bAccIntEKF  = xEKF(5, :);
-bGyrIntEKF  = xEKF(6, :);
-pIntSkog    = xSkog(1:2, :);
-vIntSkog    = xSkog(3, :);
-headIntSkog = xSkog(4, :);
-bAccIntSkog = xSkog(5, :);
-bGyrIntSkog = xSkog(6, :);
+% pIntEKF     = xEKF(1:2, :);
+% vIntEKF     = xEKF(3, :);
+% headIntEKF  = xEKF(4, :);
+% bAccIntEKF  = xEKF(5, :);
+% bGyrIntEKF  = xEKF(6, :);
+% pIntSkog    = xSkog(1:2, :);
+% vIntSkog    = xSkog(3, :);
+% headIntSkog = xSkog(4, :);
+% bAccIntSkog = xSkog(5, :);
+% bGyrIntSkog = xSkog(6, :);
 % Computation of errors
-errPosIMU   = trueTrajectory(:, 1:2) - pIMU;        % errPosIMU: [errorNorth, errorEast]
-errVelIMU   = trueTrajectory(:, 3) - vIMU;             
+errPosIMU   = trueTrajectory(:, 1:2) - estIMURaw.pos;        % errPosIMU: [errorNorth, errorEast]
+errVelIMU   = trueTrajectory(:, 3) - estIMURaw.vel;             
 errPosGNSS  = trueTrajectory(:, 1:2) - pGNSS;       % errPosGNSS: [errorNorth, errorEast]
-errPosEKF   = trueTrajectory(:, 1:2) - pIntEKF';    % errPosEKF: [errorNorth, errorEast]
-errVelEKF   = trueTrajectory(:, 3) - vIntEKF';
-errPosSkog  = trueTrajectory(:, 1:2) - pIntSkog';   % errPosSkog: [errorNorth, errorEast]
-errVelSkog  = trueTrajectory(:, 3) - vIntSkog';
+errPosEKF   = trueTrajectory(:, 1:2) - estIntEKF.pos;    % errPosEKF: [errorNorth, errorEast]
+errVelEKF   = trueTrajectory(:, 3) - estIntEKF.vel;
+% errPosSkog  = trueTrajectory(:, 1:2) - pIntSkog';   % errPosSkog: [errorNorth, errorEast]
+% errVelSkog  = trueTrajectory(:, 3) - vIntSkog';
 
 %% Plots
 
@@ -48,13 +48,13 @@ errVelSkog  = trueTrajectory(:, 3) - vIntSkog';
 % True trajectory vs measurements
 figure;
 plot(trueTrajectory(:, 2), trueTrajectory(:, 1), '.k'); hold on;
-plot(pIMU(:, 2), pIMU(:, 1), 'b.'); 
+plot(estIMURaw.pos(:, 2), estIMURaw.pos(:, 1), 'b.'); 
 plot(pGNSS(:, 2), pGNSS(:, 1), 'r.');
 xlabel('East (m)'); ylabel('North (m)');
 title('True trajectory');
 legend('True', 'IMU', 'GNSS');
 
-% IMU Position error plot
+% IMU & GNSS Position error comparison
 figure
 plot(tVec, errPosIMU(:, 1), 'b-'); hold on
 plot(tVec, errPosIMU(:, 2), 'g-');
@@ -64,21 +64,31 @@ xlabel('Time (s)'); ylabel('Position error (m)')
 legend('IMU North', 'IMU East', 'GNSS North', 'GNSS East');
 title('IMU-only & GNSS-only Position error');
 
+
 % % IMU Velocity error plot
 % figure
 % plot(tVec, errVelIMU, 'b-'); hold on
 % xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 % title('IMU-only Velocity error');
-% 
-% % True trajectory vs estimated trajectory
+
+
+% True trajectory vs estimated trajectory
 figure;
 plot(trueTrajectory(:, 2), trueTrajectory(:, 1), '.k'); hold on;
-plot(pIntEKF(2, :), pIntEKF(1, :), 'r-'); 
+plot(estIntEKF.pos(:, 2), estIntEKF.pos(:, 1), 'r-'); 
 % plot(tVec, pIntSkog, 'r-'); 
 xlabel('East (m)'); ylabel('North (m)');
 title('True position vs estimations');
 legend('True', 'EKF', 'Skog');
-% 
+
+% EKF Position error
+figure
+plot(tVec, errPosEKF(:, 1), 'b-'); hold on
+plot(tVec, errPosEKF(:, 2), 'g-');
+xlabel('Time (s)'); ylabel('Position error (m)')
+legend('Pos North', 'Pos East', 'GNSS North', 'GNSS East');
+title('EKF Position error');
+
 % % True Velocity vs estimated velocity
 % figure;
 % plot(tVec, v, 'k-', 'Linewidth', 1); hold on;
