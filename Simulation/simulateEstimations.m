@@ -1,4 +1,4 @@
-function [estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkogPresent, estIntSkogPast, PSkogPresent, PSkogPast] = ...
+function [estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkogHistoric, estIntSkogAtDelay, covSkogHistoric, covSkogAtDelay, measAcc, measGyro] = ...
             simulateEstimations(trueTrajectory, tspan, Config)
 
 %% Initializations
@@ -63,8 +63,8 @@ estIntEKF.biasGyro(1)        = Config.xbg0;
 
 % Skog EKF method: 
 % Parameters and initializations
-PSkogPresent        = zeros(7,7,nPts);
-PSkogPresent(:,:,1) = diag([Config.sigmaInitNorthPos^2,...
+covSkogHistoric        = zeros(7,7,nPts);
+covSkogHistoric(:,:,1) = diag([Config.sigmaInitNorthPos^2,...
                     Config.sigmaInitEastPos^2,  ...
                     Config.sigmaInitVel^2,      ...
                     Config.sigmaInitHeading^2,  ...
@@ -73,31 +73,34 @@ PSkogPresent(:,:,1) = diag([Config.sigmaInitNorthPos^2,...
                     Config.sigmaInitDelay^2]);
                 
 % Estimated GNSS/INS Integrated Navigation Solution (IMU and GPS): Output variable                
-estIntSkogPresent.pos               = zeros(nPts,2);    
-estIntSkogPresent.pos(1, :)         = [Config.xpNorth0 Config.xpEast0];
-estIntSkogPresent.vel               = zeros(nPts,1);    
-estIntSkogPresent.vel(1)            = Config.xv0;
-estIntSkogPresent.heading           = zeros(nPts,1);    
-estIntSkogPresent.heading(1)        = Config.xheading0;
-estIntSkogPresent.biasAcc           = zeros(nPts,1);    
-estIntSkogPresent.biasAcc(1)        = Config.xba0;
-estIntSkogPresent.biasGyro           = zeros(nPts,1);    
-estIntSkogPresent.biasGyro(1)        = Config.xbg0;
-estIntSkogPresent.timeDelay           = zeros(nPts,1);    
-estIntSkogPresent.timeDelay(1)        = Config.xt0;
+estIntSkogHistoric.pos               = zeros(nPts,2);    
+estIntSkogHistoric.pos(1, :)         = [Config.xpNorth0 Config.xpEast0];
+estIntSkogHistoric.vel               = zeros(nPts,1);    
+estIntSkogHistoric.vel(1)            = Config.xv0;
+estIntSkogHistoric.heading           = zeros(nPts,1);    
+estIntSkogHistoric.heading(1)        = Config.xheading0;
+estIntSkogHistoric.biasAcc           = zeros(nPts,1);    
+estIntSkogHistoric.biasAcc(1)        = Config.xba0;
+estIntSkogHistoric.biasGyro          = zeros(nPts,1);    
+estIntSkogHistoric.biasGyro(1)       = Config.xbg0;
+estIntSkogHistoric.timeDelay         = zeros(nPts,1);    
+estIntSkogHistoric.timeDelay(1)      = Config.xt0;
+estIntSkogHistoric.acc               = zeros(nPts,1);
+estIntSkogHistoric.headingRate       = zeros(nPts,1);
 
-estIntSkogPast.pos               = nan(nPts,2);    
-estIntSkogPast.vel               = nan(nPts,1);    
-estIntSkogPast.heading           = nan(nPts,1);    
-estIntSkogPast.biasAcc           = nan(nPts,1);    
-estIntSkogPast.biasGyro           = nan(nPts,1);    
-estIntSkogPast.timeDelay           = nan(nPts,1);    
+estIntSkogAtDelay.pos               = nan(nPts,2);    
+estIntSkogAtDelay.vel               = nan(nPts,1);    
+estIntSkogAtDelay.heading           = nan(nPts,1);    
+estIntSkogAtDelay.biasAcc           = nan(nPts,1);    
+estIntSkogAtDelay.biasGyro           = nan(nPts,1);    
+estIntSkogAtDelay.timeDelay           = nan(nPts,1);    
 
-PSkogPast        = nan(7,7,nPts);
+covSkogAtDelay        = nan(7,7,nPts);
 
 
 for epoch = 2:1:nPts
     [measAcc(epoch), measGyro(epoch), pGNSS(epoch, :)] = generateMeasurements(pTrue, Config, epoch);
+%     load('test.mat');
     
     % IMU Only: Navigation equations (Using raw measurements)
     
@@ -114,12 +117,12 @@ for epoch = 2:1:nPts
                                                         tIMU,                       ...
                                                         Config);
     
-    [estIntSkogPresent, estIntSkogPast, PSkogPresent, PSkogPast, measAccCorrSkog, measGyroCorrSkog] =         ...
-                                                skogEKF(estIntSkogPresent,              ...
-                                                        estIntSkogPast, ...
-                                                        PSkogPresent,        ...
-                                                        PSkogPast, ...
-                                                        pGNSS(epoch,:),           ...
+    [estIntSkogHistoric, estIntSkogAtDelay, covSkogHistoric, covSkogAtDelay, measAccCorrSkog, measGyroCorrSkog] =         ...
+                                                skogEKF(estIntSkogHistoric,  ...
+                                                        estIntSkogAtDelay,     ...
+                                                        covSkogHistoric,       ...
+                                                        covSkogAtDelay,          ...
+                                                        pGNSS(epoch,:),     ...
                                                         measAcc,            ...
                                                         measAccCorrSkog,    ...
                                                         measGyro,           ...
