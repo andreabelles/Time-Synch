@@ -65,6 +65,7 @@ covIntSkogHistoric(:,:, epoch) = PPred; % Save in case no GNSS measurements
 if ~isnan(pGNSS) % If GNSS position is available
     %% Interpolate accelerometer measurement from epoch to epoch-Td
     timeAtDelay = tspan(epoch) - estIntSkogHistoric.timeDelay(epoch);
+    timeAtDelay = max(0,timeAtDelay);
     % Extracted from Eq. (24) and reference paper [22]. 
     measAccInt = lagrangeInterp(tspan(1:epoch), measAccCorr(1:epoch), timeAtDelay); % TODO: check constraint for Td
     measGyroInt = lagrangeInterp(tspan(1:epoch), measGyroCorr(1:epoch), timeAtDelay); % TODO: check constraint for Td
@@ -152,18 +153,29 @@ if ~isnan(pGNSS) % If GNSS position is available
     gammaFactor = (PPredAtDelay(7,7)*expX + 2*expX(7)*(PPredAtDelay(1:7,7) - expX(7)*expX))*(aProj'/2); % Eq. (28)
     
     % Update state vector and covariance matrix at time delay (epoch-Td)
-    Phi = FktimeToDelay - Kp*H;
-    xUpdatedAtDelay = Phi*xPredAtDelay + Kp*(dz - d);   % Eq. (25)
+    xUpdatedAtDelay = xPredAtDelay + Kp*(dz - d);
+    
+    %Phi = FktimeToDelay - Kp*H;
+    %xUpdatedAtDelay = Phi*xPredAtDelay + Kp*(dz - d);   % Eq. (25)
     
 %     PUpdatedAtDelay = PPredAtDelay - Kp*H*PPredAtDelay;
-    PUpdatedAtDelay = PPredAtDelay - Kp*H*PPredAtDelay*(Kp*H)' + Kp*R*Kp' ...   % Eq. (26)
+    PUpdatedAtDelay = PPredAtDelay - Kp*H*PPredAtDelay...*(Kp*H)' + Kp*R*Kp' ...   % Eq. (26)
                     + Kp*piFactor*Kp' - FktimeToDelay*gammaFactor*Kp' - Kp*gammaFactor'*FktimeToDelay'; 
     
-    % Constrained state estimation
+    % Constrained state estimation: Estimate projection
     d = - estPredAtDelay.timeDelay;
     D = zeros(1,7);
     D(1, 7) = 1;
-    xConstrainedAtDelay = xUpdatedAtDelay - PUpdatedAtDelay*D'*pinv(D*PUpdatedAtDelay*D')*(D*xUpdatedAtDelay - d);      
+    xConstrainedAtDelay = xUpdatedAtDelay - PUpdatedAtDelay*D'*pinv(D*PUpdatedAtDelay*D')*(D*xUpdatedAtDelay - d);
+  
+    % Constrained state estimation: PDF truncation
+%     D = zeros(7,1); %Phi_k from Lee and Johnson 2017
+%     D(1,1) = 1;  
+%     lowerBound = - estPredAtDelay.timeDelay;
+%     upperBound = timeAtDelay - estPredAtDelay.timeDelay;
+%     [T, W] = jordan(PUpdatedAtDelay);
+%     rho = zeros(7,7);
+%     rho(1,:) = (D'*T*sqrt(W))/sqrt(D'*PUpdatedAtDelay*D);
     %% CLOSED LOOP CORRECTION
     % GNSS/INS Integration navigation solution at time delay (epoch-Td)
     estUpdatedAtDelay.pos = estPredAtDelay.pos + xConstrainedAtDelay(1:2)';
@@ -186,7 +198,7 @@ if ~isnan(pGNSS) % If GNSS position is available
     % Discrete-time state transition model
     FkDelaytoEpoch       = eye(7) + estIntSkogHistoric.timeDelay(epoch)*FDelaytoEpoch; % Taylor expansion 1st order
     QkDelaytoEpoch       = estIntSkogHistoric.timeDelay(epoch)*Q;
-
+    
     % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1) 
     x = FkDelaytoEpoch * xConstrainedAtDelay; % X_k|k-1 = F_k*X_k-1|k-1 % state vector updated at epoch
     % Covariance prediction - covariance matrix updated at epoch

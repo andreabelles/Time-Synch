@@ -30,9 +30,15 @@ end
 % Flip h so h(0) multiplies last y
 % h = flip(h);
 
+% Condition to avoid nan values at output
+h(isinf(h)) = 0;
+
 %% Interpolation
 v = sum(dot(y(kWindow), h));
 
+if isnan(v)
+    error('Error during interpolation');
+end
 % figure; 
 % plot(n, h, 'o-');
 % title('Weights');
