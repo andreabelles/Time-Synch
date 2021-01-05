@@ -4,7 +4,9 @@ function [pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog] = simulateEstimations( ..
                                                         rp0, rv0, rba0, rt0,        ...
                                                         sigmaGNSS, sigmaAcc,        ...
                                                         sigmaPos, sigmaVel, sigmaAccBias, sigmaTd)
-
+if nargin < 1
+   main; 
+end
 %% Initializations
 
 nPts    = length(tspan);        
@@ -24,7 +26,7 @@ PEKF(:,:,1) = [sigmaPos^2 0 0; 0 sigmaVel^2 0; 0 0 sigmaAccBias^2];
 xEKF         = zeros(3,nPts);
 xEKF(1, 1)   = rp0;
 xEKF(2, 1)   = rv0;
-xEKF(3, 1)   = rba0;
+xEKF(3, 1)   = 0*rba0;
 
 PSkog           = zeros(4,4,nPts);
 PSkog(:,:,1)    = [sigmaPos^2 0 0 0; 0 sigmaVel^2 0 0; 0 0 sigmaAccBias^2 0; 0 0 0 sigmaTd^2];
