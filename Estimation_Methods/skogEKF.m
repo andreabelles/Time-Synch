@@ -159,14 +159,19 @@ if ~isnan(pGNSS) % If GNSS position is available
     PUpdatedAtDelay = PPredAtDelay - Kp*H*PPredAtDelay*(Kp*H)' + Kp*R*Kp' ...   % Eq. (26)
                     + Kp*piFactor*Kp' - FktimeToDelay*gammaFactor*Kp' - Kp*gammaFactor'*FktimeToDelay'; 
     
+    % Constrained state estimation
+    d = - estPredAtDelay.timeDelay;
+    D = zeros(1,7);
+    D(1, 7) = 1;
+    xConstrainedAtDelay = xUpdatedAtDelay - PUpdatedAtDelay*D'*pinv(D*PUpdatedAtDelay*D')*(D*xUpdatedAtDelay - d);      
     %% CLOSED LOOP CORRECTION
     % GNSS/INS Integration navigation solution at time delay (epoch-Td)
-    estUpdatedAtDelay.pos = estPredAtDelay.pos + xUpdatedAtDelay(1:2)';
-    estUpdatedAtDelay.vel = estPredAtDelay.vel + xUpdatedAtDelay(3);
-    estUpdatedAtDelay.heading = estPredAtDelay.heading + xUpdatedAtDelay(4);
-    estUpdatedAtDelay.biasAcc = xUpdatedAtDelay(5); % Bias Acc estimation
-    estUpdatedAtDelay.biasGyro = xUpdatedAtDelay(6); % Bias Gyro estimation
-    estUpdatedAtDelay.timeDelay = estPredAtDelay.timeDelay + xUpdatedAtDelay(7); % Time Delay estimation 
+    estUpdatedAtDelay.pos = estPredAtDelay.pos + xConstrainedAtDelay(1:2)';
+    estUpdatedAtDelay.vel = estPredAtDelay.vel + xConstrainedAtDelay(3);
+    estUpdatedAtDelay.heading = estPredAtDelay.heading + xConstrainedAtDelay(4);
+    estUpdatedAtDelay.biasAcc = xConstrainedAtDelay(5); % Bias Acc estimation
+    estUpdatedAtDelay.biasGyro = xConstrainedAtDelay(6); % Bias Gyro estimation
+    estUpdatedAtDelay.timeDelay = estPredAtDelay.timeDelay + xConstrainedAtDelay(7); % Time Delay estimation 
 
     %% Move updated state vector and covariance matrix from epoch-Td to epoch
     % Continuous-time state transition model
@@ -183,7 +188,7 @@ if ~isnan(pGNSS) % If GNSS position is available
     QkDelaytoEpoch       = estIntSkogHistoric.timeDelay(epoch)*Q;
 
     % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1) 
-    x = FkDelaytoEpoch * xUpdatedAtDelay; % X_k|k-1 = F_k*X_k-1|k-1 % state vector updated at epoch
+    x = FkDelaytoEpoch * xConstrainedAtDelay; % X_k|k-1 = F_k*X_k-1|k-1 % state vector updated at epoch
     % Covariance prediction - covariance matrix updated at epoch
     covIntSkogHistoric(:,:, epoch) = FkDelaytoEpoch * PUpdatedAtDelay * FkDelaytoEpoch' + QkDelaytoEpoch; 
     
