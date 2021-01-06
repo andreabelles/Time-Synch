@@ -92,13 +92,13 @@ legend('True', 'IMU', 'GNSS');
 % legend('IMU North', 'IMU East', 'GNSS North', 'GNSS East');
 % title('IMU-only & GNSS-only Position error');
 figure
-plot(abs(errPosIMU(:, 1)), 'b-'); hold on
-plot(abs(errPosIMU(:, 2)), 'g-');
+plot(errPosIMU(:, 1), 'b-'); hold on
+plot(errPosIMU(:, 2), 'g-');
 %plot(abs(errPosGNSS(:, 1)), 'r.');
 %plot(abs(errPosGNSS(:, 2)), 'm.');
-xlabel('Time (s)'); ylabel('Absolute position error (m)')
+xlabel('Time (s)'); ylabel('Position error (m)')
 legend('IMU North', 'IMU East');%, 'GNSS North', 'GNSS East');
-title('IMU-only & GNSS-only Position error');
+title('IMU-only Position error');
 
 figure;
 plot(xEKF(1,:), 'b-'); hold on;
@@ -146,7 +146,7 @@ plot(errPosEKF(:, 1), 'b-', 'Linewidth', 1.5); hold on
 plot(errPosEKF(:, 2), 'g-', 'Linewidth', 1.5);
 %plot(abs(errPosSkog(:, 1)), 'r-', 'Linewidth', 1.5);
 %plot(abs(errPosSkog(:, 2)), 'm-', 'Linewidth', 1.5);
-xlabel('Time (s)'); ylabel('Absolute position error (m)')
+xlabel('Time (s)'); ylabel('Position error (m)')
 legend('EKF North', 'EKF East');%, 'SKOG North', 'SKOG East');
 title('EKF Position error');
 
@@ -155,21 +155,21 @@ subplot(2,1,1), plot(errPosEKF(:,1), 'b', 'LineWidth',2), hold on, grid on,
 plot(3*sqrt(varsPosEKF(1:Config.M:end,1)), 'r', 'LineWidth',2);
 plot(-3*sqrt(varsPosEKF(1:Config.M:end,1)), 'r', 'LineWidth',2);
 xlabel('Time [s]'); ylabel('[m]'); legend('Estimation error','3\sigma envelop');
-title('Estimation error of EKF position error (North axis)');
+title('Estimation error (North axis)');
 subplot(2,1,2), plot(errPosEKF(:,2), 'b', 'LineWidth',2), hold on, grid on, 
 plot(3*sqrt(varsPosEKF(1:Config.M:end,2)), 'r', 'LineWidth',2);
 plot(-3*sqrt(varsPosEKF(1:Config.M:end,2)), 'r', 'LineWidth',2);
 xlabel('Time [s]'); ylabel('[m]'); legend('Estimation error','3\sigma envelop');
-title('Estimation error of EKF position error (East axis)');
+title('Estimation error (East axis)');
 
-figure
-plot(xEKF(:, 1), 'b-'); hold on
-plot(xEKF(:, 2), 'g-');
-%plot(abs(errPosGNSS(:, 1)), 'r.');
-%plot(abs(errPosGNSS(:, 2)), 'm.');
-xlabel('Time (s)'); ylabel('EKF Position error (m)')
-legend('IMU North', 'IMU East');%, 'GNSS North', 'GNSS East');
-title('EKF Position error');
+% figure
+% plot(xEKF(:, 1), 'b-'); hold on
+% plot(xEKF(:, 2), 'g-');
+% %plot(abs(errPosGNSS(:, 1)), 'r.');
+% %plot(abs(errPosGNSS(:, 2)), 'm.');
+% xlabel('Time (s)'); ylabel('EKF Position error (m)')
+% legend('IMU North', 'IMU East');%, 'GNSS North', 'GNSS East');
+% title('EKF Position error');
 % figure
 % plot(tVec, errEucliEKF, 'b-', 'Linewidth', 1.5); hold on
 % plot(tVec, errEucliSkog, 'r-', 'Linewidth', 1.5);
@@ -231,12 +231,12 @@ title('EKF Position error');
 % % legend('EKF \sigma_{Td}');
 % % title('EKF Delay STD');
 % 
-figure;
-plot(tVec, estIntEKF.biasAcc, 'b-'); hold on; 
-%plot(tVec, estIntSkogHistoric.biasAcc, 'r-')
-xlabel('Time (s)'); ylabel('Acceleration bias (m/s^2)')
-title('Accelerometer Bias estimation');
-legend('EKF', 'Skog');
+% figure;
+% plot(tVec, estIntEKF.biasAcc, 'b-'); hold on; 
+% %plot(tVec, estIntSkogHistoric.biasAcc, 'r-')
+% xlabel('Time (s)'); ylabel('Acceleration bias (m/s^2)')
+% title('Accelerometer Bias estimation');
+% %legend('EKF', 'Skog');
 % 
 % figure;
 % plot(tVec, rad2deg(estIntEKF.biasGyro), 'b-'); hold on;
