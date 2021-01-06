@@ -4,43 +4,45 @@
 tEnd:                   240     # seconds   End time of the simulation
 fIMU:                   100     # Hz        IMU and EKF rate
 fGNSS:                  1       # Hz        GNSS rate
-tDelay:                 0     # seconds   GNSS observations delay
+tDelay:                 0.2     # seconds   GNSS observations delay
 # IMU SENSORS MEASUREMENT NOISE:
 varMeasAcc:             0.1     # m^2/s^3   Variance of the accelerometer measurement
-varMeasGyro:            0.1     # deg^2/s   Variance of the gyroscope measurement
+varMeasGyro:            0.01     # rad^2/s   Variance of the gyroscope measurement
 # GNSS MEASUREMENT NOISE:
-varMeasPosGNSS:         1       # m^2      Variance of the GNSS position measurements
+varMeasPosGNSS:         100    # m^2      Variance of the GNSS position measurements
 
 # TRUE TRAJECTORY DEFINITION
 a0:                     0       # m/s^2     Initial acceleration
 v0:                     1       # m/s       Initial velocity
 pNorth0:                0       # m         Initial North position
 pEast0:                 0       # m         Initial East position
-headingRate0:           0       # deg/s     Initial angular velocity
-heading0:               45      # deg       Initial heading
+headingRate0:           0       # rad/s     Initial angular velocity
+heading0:               5.67768 # rad       Initial heading
 
 # LOOSELY COOPLED INTEGRATION:
 # GNSS/INS INTEGRATION NAVIGATION SOLUTION VECTOR INITIALIZATION
 xpNorth0:               0       # m         Initial North position
 xpEast0:                0       # m         Initial East position
-xv0:                    1       # m/s       Initial velocity error 
-xheading0:              45      # deg       Initial heading angle
+xv0:                    0       # m/s       Initial velocity error 
+xheading0:              5.67768 # rad       Initial heading angle
 xba0:                   0       # m/s^2     Initial acceleration bias
-xbg0:                   0       # deg/s     Initial gyroscope bias
+xbg0:                   0       # rad/s     Initial gyroscope bias
 xt0:                    0       # s         Initial time delay
 # COVARIANCE MATRIX INITIALIZATION
-sigmaInitNorthPos:      0.5     # m         Initial STD of the North position error
-sigmaInitEastPos:       0.5     # m         Initial STD of the East position error
-sigmaInitVel:           1       # m/s       Initial STD of the velocity error
-sigmaInitHeading:       0.5     # deg       Initial STD of the heading error
-sigmaInitAccBias:       0.002   # m/s^2     Initial STD of the acceleration bias
-sigmaInitGyroBias:      0.002   # deg/s     Initial STD of the gyroscope bias
-sigmaInitDelay:         0     # s         Initial STD of the time delay error
+sigmaInitNorthPos:      0.001     # m         Initial STD of the North position error
+sigmaInitEastPos:       0.001     # m         Initial STD of the East position error
+sigmaInitVel:           0.0001       # m/s       Initial STD of the velocity error
+sigmaInitHeading:       0.0001     # rad       Initial STD of the heading error
+sigmaInitAccBias:       0.01   # m/s^2     Initial STD of the acceleration bias
+sigmaInitGyroBias:      0.01   # rad/s     Initial STD of the gyroscope bias
+sigmaInitDelay:         0.5     # s         Initial STD of the time delay error
 # SYSTEM NOISE COVARIANCE MATRIX (Q)
-varAccNoise:            0.01    # m^2/s^3   Variance of the accelerometer
-varAccBiasNoise:        0.001   # m^2/s^5   Variance of the accelerometer bias
-varGyroNoise:           0.01    # deg^2/s   Variance of the gyroscope
-varGyroBiasNoise:       0.01    # deg^2/s^3 Variance of the gyroscope bias
-varDelayProcessNoise:   0  # s         Variance of process noise of the delay
+varAccNoise:            0.1    # m^2/s^3   Variance of the accelerometer
+varAccBiasNoise:        0.05   # m^2/s^5   Variance of the accelerometer bias
+timeConstantAccBias:    5       # s         Time constant of the accelerometer bias
+varGyroNoise:           0.01    # rad^2/s   Variance of the gyroscope
+varGyroBiasNoise:       0.001   # rad^2/s^3 Variance of the gyroscope bias
+timeConstantGyroBias:    4       # s         Time constant of the gyroscope bias
+varDelayProcessNoise:   0       # s         Variance of process noise of the delay
 # MEASUREMENT NOISE COVARIANCE MATRIX (R)
-varPosGNSS:             0.5       # m^2      Variance of the GNSS measurement model (R)
+varPosGNSS:             100       # m^2      Variance of the GNSS measurement model (R)

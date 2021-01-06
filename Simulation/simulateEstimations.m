@@ -1,14 +1,26 @@
-function [estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkogHistoric, estIntSkogAtDelay, covSkogHistoric, covSkogAtDelay, measAcc, measGyro] = ...
+function [estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkogHistoric, estIntSkogAtDelay, covSkogHistoric, covSkogAtDelay, measAcc, measGyro, xEKF] = ...
             simulateEstimations(trueTrajectory, tspan, Config)
+
+%% Load data
+load ('IMU.mat');
+load ('GPS.mat');
+
+% IMU data in body frame
+% ---------------------------------------
+R_platform2body = [1 0 0; 0 -1 0; 0 0 -1];
+f_bi_b = f_bi_p * R_platform2body;  % -g on z-axis
+w_bi_b = w_bi_p * R_platform2body;
 
 %% Initializations
 pTrue = trueTrajectory(:,1:2);
 tIMU = Config.tIMU;
 nPts    = length(tspan);        
 measAcc = zeros(nPts,1);
+measAcc(1) = f_bi_b(1);
 measAccCorrStandard = zeros(nPts,1);
 measAccCorrSkog = zeros(nPts,1);
 measGyro = zeros(nPts,1);
+measGyro(1) = w_bi_b(1);
 measGyroCorrStandard = zeros(nPts,1);
 measGyroCorrSkog = zeros(nPts,1);
 
@@ -40,6 +52,8 @@ estIMURaw.pos(1, :)         = [Config.pNorth0 Config.pEast0];
 pGNSS   = nan(nPts,2);
 
 % Standard EKF parameters and initializations
+% State vector
+xEKF        = zeros(6,nPts);
 PEKF        = zeros(6,6,nPts); % Covariance matrix
 PEKF(:,:,1) = diag([Config.sigmaInitNorthPos^2, ...
                     Config.sigmaInitEastPos^2,  ...
@@ -99,15 +113,14 @@ covSkogAtDelay        = nan(7,7,nPts);
 
 
 for epoch = 2:1:nPts
-    [measAcc(epoch), measGyro(epoch), pGNSS(epoch, :)] = generateMeasurements(pTrue, Config, epoch);
+    [measAcc(epoch), measGyro(epoch), pGNSS(epoch, :)] = generateMeasurements(pTrue, Config, epoch, f_bi_b, w_bi_b, ned_GPS);
 %     load('test.mat');
-    
     % IMU Only: Navigation equations (Using raw measurements)
     
     [estIMURaw] = navigationEquations(measGyro(epoch), measAcc(epoch), estIMURaw, epoch, tIMU);
     
     % Integration GNSS/INS: Standard EKF
-    [estIntEKF, PEKF(:,:,epoch), measAccCorrStandard(epoch), measGyroCorrStandard(epoch)] =     ...
+    [estIntEKF, PEKF(:,:,epoch), measAccCorrStandard(epoch), measGyroCorrStandard(epoch), xEKF(:,epoch)] =     ...
                                             standardEKF(estIntEKF,                ...
                                                         epoch, ...
                                                         PEKF(:,:,epoch-1),              ...
@@ -115,7 +128,8 @@ for epoch = 2:1:nPts
                                                         measAcc(epoch),                 ...
                                                         measGyro(epoch),                ...
                                                         tIMU,                       ...
-                                                        Config);
+                                                        Config,             ...
+                                                        xEKF(:,epoch-1));
     
     [estIntSkogHistoric, estIntSkogAtDelay, covSkogHistoric, covSkogAtDelay, measAccCorrSkog, measGyroCorrSkog] =         ...
                                                 skogEKF(estIntSkogHistoric,  ...

@@ -38,12 +38,12 @@ x0         = zeros(7,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasA
 
 % Continuous-time state transition model
 F       = zeros(7);
-F(1, 3) = cosd(estIntSkogHistoric.heading(epoch));                              % d PNorth / d vAT
-F(1, 4) = -estIntSkogHistoric.vel(epoch)*sind(estIntSkogHistoric.heading(epoch));       % d PNorth / d heading
-F(2, 3) = sind(estIntSkogHistoric.heading(epoch));                              % d PEast / d vAT
-F(2, 4) = estIntSkogHistoric.vel(epoch)*cosd(estIntSkogHistoric.heading(epoch));        % d PEast / d heading
-F(3, 5) = 1;                                                            % d vAT / biasAcc
-F(4, 6) = 1;                                                            % d heading / biasGyro
+F(1, 3) = cos(estIntSkogHistoric.heading(epoch));                              % d PNorth / d vAT
+F(1, 4) = -estIntSkogHistoric.vel(epoch)*sin(estIntSkogHistoric.heading(epoch));       % d PNorth / d heading
+F(2, 3) = sin(estIntSkogHistoric.heading(epoch));                              % d PEast / d vAT
+F(2, 4) = estIntSkogHistoric.vel(epoch)*cos(estIntSkogHistoric.heading(epoch));        % d PEast / d heading
+F(3, 5) = -1/Config.timeConstantAccBias;                                               % d vAT / biasAcc
+F(4, 6) = -1/Config.timeConstantGyroBias;                                              % d heading / biasGyro
  
 Q       = zeros(7);
 Q(3, 3) = Config.varAccNoise;        % Velocity
@@ -100,21 +100,21 @@ if ~isnan(pGNSS) % If GNSS position is available
     estPredAtDelay.acc = measAccInt;                   % Acceleration
     estPredAtDelay.vel = estPrevDelay.vel + 0.5 * (estPredAtDelay.acc + estPrevDelay.acc) * timeToDelay;  % Velocity
     estPredAtDelay.pos(1) = estPrevDelay.pos(1) + ...  % North position
-        0.5 * (estPredAtDelay.vel + estPrevDelay.vel) * cosd(estPredAtDelay.heading) * timeToDelay;  
+        0.5 * (estPredAtDelay.vel + estPrevDelay.vel) * cos(estPredAtDelay.heading) * timeToDelay;  
     estPredAtDelay.pos(2) = estPrevDelay.pos(2) + ...  % East position
-        0.5 * (estPredAtDelay.vel + estPrevDelay.vel) * sind(estPredAtDelay.heading) * timeToDelay;
+        0.5 * (estPredAtDelay.vel + estPrevDelay.vel) * sin(estPredAtDelay.heading) * timeToDelay;
     estPredAtDelay.biasAcc   = estPrevDelay.biasAcc;
     estPredAtDelay.biasGyro  = estPrevDelay.biasGyro;
     estPredAtDelay.timeDelay = estPrevDelay.timeDelay;
     
     % Continuous-time state transition modelat time delay (epoch-Td)
     F       = zeros(7);
-    F(1, 3) = cosd(estPredAtDelay.heading);                              % d PNorth / d vAT
-    F(1, 4) = -estPredAtDelay.vel*sind(estPredAtDelay.heading);       % d PNorth / d heading
-    F(2, 3) = sind(estPredAtDelay.heading);                              % d PEast / d vAT
-    F(2, 4) = estPredAtDelay.vel*cosd(estPredAtDelay.heading);        % d PEast / d heading
-    F(3, 5) = 1;                                                            % d vAT / biasAcc
-    F(4, 6) = 1;                                                            % d heading / biasGyro
+    F(1, 3) = cos(estPredAtDelay.heading);                              % d PNorth / d vAT
+    F(1, 4) = -estPredAtDelay.vel*sin(estPredAtDelay.heading);       % d PNorth / d heading
+    F(2, 3) = sin(estPredAtDelay.heading);                              % d PEast / d vAT
+    F(2, 4) = estPredAtDelay.vel*cos(estPredAtDelay.heading);        % d PEast / d heading
+    F(3, 5) = -1/Config.timeConstantAccBias;                                                            % d vAT / biasAcc
+    F(4, 6) = -1/Config.timeConstantGyroBias;                                                            % d heading / biasGyro
 
     % Discrete-time state transition model
     FktimeToDelay       = eye(7) + timeToDelay*F; % Taylor expansion 1st order
@@ -129,8 +129,8 @@ if ~isnan(pGNSS) % If GNSS position is available
     % Measurement model
     z = pGNSS' - estPredAtDelay.pos'; % Observation vector: GPS - prediction INS at epoch-Td
     
-    H = [1 0 0 0 0 0 -cosd(estPredAtDelay.heading)*estPredAtDelay.vel;   ...
-         0 1 0 0 0 0 -sind(estPredAtDelay.heading)*estPredAtDelay.vel]; % Eq. (21)
+    H = [1 0 0 0 0 0 -cos(estPredAtDelay.heading)*estPredAtDelay.vel;   ...
+         0 1 0 0 0 0 -sin(estPredAtDelay.heading)*estPredAtDelay.vel]; % Eq. (21)
     R = diag([Config.varPosGNSS Config.varPosGNSS]);
     
     % Kalman filter gain computation
@@ -143,8 +143,8 @@ if ~isnan(pGNSS) % If GNSS position is available
     Kp = FktimeToDelay*K; % From eq. (5) and (6)
     
     % Innovation vector bias
-    aProj = [cosd(estPredAtDelay.heading)*estPredAtDelay.acc; ...  % acceleration projected onto N-E axis
-             sind(estPredAtDelay.heading)*estPredAtDelay.acc];
+    aProj = [cos(estPredAtDelay.heading)*estPredAtDelay.acc; ...  % acceleration projected onto N-E axis
+             sin(estPredAtDelay.heading)*estPredAtDelay.acc];
     d = aProj * (1/2) * (estPredAtDelay.timeDelay^2); % Eq. (23)
     
     % Factors to compute the covariance matrix of the augmented system
@@ -188,12 +188,12 @@ if ~isnan(pGNSS) % If GNSS position is available
     %% Move updated state vector and covariance matrix from epoch-Td to epoch
     % Continuous-time state transition model
     FDelaytoEpoch       = zeros(7);
-    FDelaytoEpoch(1, 3) = cosd(estUpdatedAtDelay.heading);                              % d PNorth / d vAT
-    FDelaytoEpoch(1, 4) = -estUpdatedAtDelay.vel*sind(estUpdatedAtDelay.heading);       % d PNorth / d heading
-    FDelaytoEpoch(2, 3) = sind(estUpdatedAtDelay.heading);                              % d PEast / d vAT
-    FDelaytoEpoch(2, 4) = estUpdatedAtDelay.vel*cosd(estUpdatedAtDelay.heading);        % d PEast / d heading
-    FDelaytoEpoch(3, 5) = 1;                                                            % d vAT / biasAcc
-    FDelaytoEpoch(4, 6) = 1;                                                            % d heading / biasGyro
+    FDelaytoEpoch(1, 3) = cos(estUpdatedAtDelay.heading);                              % d PNorth / d vAT
+    FDelaytoEpoch(1, 4) = -estUpdatedAtDelay.vel*sin(estUpdatedAtDelay.heading);       % d PNorth / d heading
+    FDelaytoEpoch(2, 3) = sin(estUpdatedAtDelay.heading);                              % d PEast / d vAT
+    FDelaytoEpoch(2, 4) = estUpdatedAtDelay.vel*cos(estUpdatedAtDelay.heading);        % d PEast / d heading
+    FDelaytoEpoch(3, 5) = -1/Config.timeConstantAccBias;                               % d vAT / biasAcc
+    FDelaytoEpoch(4, 6) =-1/Config.timeConstantGyroBias;                               % d heading / biasGyro
     
     % Discrete-time state transition model
     FkDelaytoEpoch       = eye(7) + estIntSkogHistoric.timeDelay(epoch)*FDelaytoEpoch; % Taylor expansion 1st order

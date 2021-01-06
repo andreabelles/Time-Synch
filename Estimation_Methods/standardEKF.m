@@ -1,5 +1,5 @@
-function [estInt, P, measAccCorr, measGyroCorr] = ...
-    standardEKF(estInt, epoch, POld, pGNSS, measAcc, measGyro, tIMU, Config)
+function [estInt, P, measAccCorr, measGyroCorr, xEKF] = ...
+    standardEKF(estInt, epoch, POld, pGNSS, measAcc, measGyro, tIMU, Config, xOld)
 
 % EKF:  This function estimates the position, velocity and bias based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
@@ -23,12 +23,12 @@ x         = zeros(6,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasAc
 
 % Continuous-time state transition model
 F       = zeros(6);
-F(1, 3) = cosd(estInt.heading(epoch));                              % d PNorth / d vAT
-F(1, 4) = -estInt.vel(epoch)*sind(estInt.heading(epoch));       % d PNorth / d heading
-F(2, 3) = sind(estInt.heading(epoch));                              % d PEast / d vAT
-F(2, 4) = estInt.vel(epoch)*cosd(estInt.heading(epoch));        % d PEast / d heading
-F(3, 5) = 1;                                                            % d vAT / biasAcc
-F(4, 6) = 1;                                                            % d heading / biasGyro
+F(1, 3) = cos(estInt.heading(epoch));                              % d PNorth / d vAT
+F(1, 4) = -estInt.vel(epoch)*sin(estInt.heading(epoch));       % d PNorth / d heading
+F(2, 3) = sin(estInt.heading(epoch));                              % d PEast / d vAT
+F(2, 4) = estInt.vel(epoch)*cos(estInt.heading(epoch));        % d PEast / d heading
+F(3, 5) = -1/Config.timeConstantAccBias;                       % d vAT / biasAcc
+F(4, 6) = -1/Config.timeConstantGyroBias;                      % d heading / biasGyro
  
 Q       = zeros(6);
 Q(3, 3) = Config.varAccNoise;        % Velocity
@@ -72,5 +72,7 @@ estInt.vel(epoch) = estInt.vel(epoch) + x(3);
 estInt.heading(epoch) = estInt.heading(epoch) + x(4);
 estInt.biasAcc(epoch) = x(5); % Bias Acc estimation
 estInt.biasGyro(epoch) = x(6); % Bias Gyro estimation 
+
+xEKF = xOld + x;
 
 end
