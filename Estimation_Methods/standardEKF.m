@@ -1,4 +1,4 @@
-function [estInt, P, measAccCorr, measGyroCorr, xEKF] = ...
+function [estInt, P, measAccCorr, measGyroCorr, xEKF, estIntPredPos] = ...
     standardEKF(estInt, epoch, POld, pGNSS, measAcc, measGyro, tIMU, Config, xOld)
 
 % EKF:  This function estimates the position, velocity and bias based on state-augmented KF
@@ -16,6 +16,7 @@ measGyroCorr = measGyro - estInt.biasGyro(epoch-1);
 
 % Navigation equations computation: Update corrected inertial navigation solution
 [estInt] = navigationEquations(measGyroCorr, measAccCorr, estInt, epoch, tIMU);
+estIntPredPos = estInt.pos(epoch, :);
 
 % Initialization
 x         = zeros(6,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasAcc BiasGyro]
