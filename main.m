@@ -64,7 +64,7 @@ title('IMU-only Velocity error');
 figure;
 plot(tVec, p, 'k-', 'Linewidth', 1); hold on;
 plot(tVec, pIntEKF, 'b-'); 
-plot(tVec, pIntSkog, 'r-'); 
+% plot(tVec, pIntSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Position (m)')
 title('True position vs estimations');
 legend('True', 'EKF', 'Skog');
@@ -73,14 +73,14 @@ legend('True', 'EKF', 'Skog');
 figure;
 plot(tVec, v, 'k-', 'Linewidth', 1); hold on;
 plot(tVec, vIntEKF, 'b-'); 
-plot(tVec, vIntSkog, 'r-'); 
+% plot(tVec, vIntSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Velocity (m/s)')
 title('True velocity vs estimations');
 legend('True', 'EKF', 'Skog');
 
 figure;
 plot(tVec, bIntEKF, 'b-'); hold on;
-plot(tVec, bIntSkog, 'r-'); 
+% plot(tVec, bIntSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Acceleration bias (m/s^2)')
 title('Standard EKF method');
 legend('EKF', 'Skog');
@@ -88,14 +88,14 @@ legend('EKF', 'Skog');
 % Estimation Error plot
 figure
 plot(tVec, errPosEKF, 'b-'); hold on;
-plot(tVec, errPosSkog, 'r-'); 
+% plot(tVec, errPosSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Position error (m)')
 title('Error in position estimations');
 legend('EKF', 'Skog');
 
 figure
 plot(tVec, errVelEKF, 'b-'); hold on;
-plot(tVec, errVelSkog, 'r-');
+% plot(tVec, errVelSkog, 'r-');
 xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 title('Error in velocity estimations');
 legend('EKF', 'Skog');
