@@ -62,8 +62,8 @@ if (~isnan(pGNSS)) % If GNSS position is available
     dz =  z - H * x;
     
     % Update state prediction (state estimation)
-    x = x + K*dz; % X_k|k = X_k|k-1 + Kdz 
-    P = P - K*H*P;
+    x = x + K * dz; % X_k|k = X_k|k-1 + Kdz 
+    P = P - K * H * P;
 end
 
 % CLOSED-LOOP CORRECTION
