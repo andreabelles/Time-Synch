@@ -4,7 +4,7 @@ addpath(genpath('./'));
 % (Description of the project here)
 
 Config = loadConfigFile();
-
+rng(1);
 %% Generation of true trajectory
 [tspan, trueTrajectory] = generateTrajectory(Config); % trueTrajectory: [posN, posE, vel, acc, heading, headingRate]
 
@@ -43,8 +43,11 @@ varDelaySkog    = permute(PSkogHistoric(7, 7, :), [3 1 2]);
 stdEucliEKF = sqrt( abs(varsPosEKF(:, 1) + varsPosEKF(:, 2)));
 stdEucliSkog = sqrt( abs(varsPosSkog(:, 1) + varsPosSkog(:, 2)) );
 
+% Save results for further analysis:
+save('results.mat')
 %% Plots
-
+generatePlots();
+stop;
 % True trajectory vs measurements
 % figure;
 % plot(trueTrajectory(:, 2), trueTrajectory(:, 1), '.k') 
