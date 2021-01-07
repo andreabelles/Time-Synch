@@ -24,12 +24,12 @@ tVec        = 0:Config.tIMU:Config.tEnd;
 % errPosSkog  = trueTrajectory(:, 1:2) - estIntSkogHistoric.pos;    % errPosEKF: [errorNorth, errorEast]
 % errVelSkog  = trueTrajectory(:, 3) - estIntSkogHistoric.vel;
 
-errPosIMU   = ned_Ref(1:241, 1:2) - estIMURaw.pos(1:Config.M:end,:);        % errPosIMU: [errorNorth, errorEast]
+errPosIMU   = ned_Ref(1:240, 1:2) - estIMURaw.pos(Config.M:Config.M:end,:);        % errPosIMU: [errorNorth, errorEast]
 % errVelIMU   = trueTrajectory(:, 3) - estIMURaw.vel;             
 %errPosGNSS  = ned_GPS() - pGNSS;       % errPosGNSS: [errorNorth, errorEast]
-errPosEKF   = ned_Ref(1:241, 1:2) - estIntEKF.pos(1:Config.M:end,:);    % errPosEKF: [errorNorth, errorEast]
+errPosEKF   = ned_Ref(1:240, 1:2) - estIntEKF.pos(Config.M:Config.M:end,:);    % errPosEKF: [errorNorth, errorEast]
 % errVelEKF   = trueTrajectory(:, 3) - estIntEKF.vel;
-errPosSkog  = ned_Ref(1:241, 1:2) - estIntSkogHistoric.pos(1:Config.M:end,:);    % errPosEKF: [errorNorth, errorEast]
+errPosSkog  = ned_Ref(1:240, 1:2) - estIntSkogHistoric.pos(Config.M:Config.M:end,:);    % errPosEKF: [errorNorth, errorEast]
 % errVelSkog  = trueTrajectory(:, 3) - estIntSkogHistoric.vel;
 
 errEucliEKF = sqrt( errPosEKF(:, 1).^2 + errPosEKF(:, 2).^2 );
@@ -81,7 +81,6 @@ plot(pGNSS(:, 2), pGNSS(:, 1), 'r.');
 xlabel('East (m)'); ylabel('North (m)');
 title('True trajectory');
 legend('True', 'IMU', 'GNSS');
-
 % IMU & GNSS Position error comparison
 % figure
 % plot(tVec, abs(errPosIMU(:, 1)), 'b-'); hold on
@@ -91,7 +90,7 @@ legend('True', 'IMU', 'GNSS');
 % xlabel('Time (s)'); ylabel('Absolute position error (m)')
 % legend('IMU North', 'IMU East', 'GNSS North', 'GNSS East');
 % title('IMU-only & GNSS-only Position error');
-figure
+figure;
 plot(errPosIMU(:, 1), 'b-'); hold on
 plot(errPosIMU(:, 2), 'g-');
 %plot(abs(errPosGNSS(:, 1)), 'r.');
@@ -99,6 +98,9 @@ plot(errPosIMU(:, 2), 'g-');
 xlabel('Time (s)'); ylabel('Position error (m)')
 legend('IMU North', 'IMU East');%, 'GNSS North', 'GNSS East');
 title('IMU-only Position error');
+filename = ['IMU_only_errors','.png'];
+dirFig = fullfile('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24', filename);
+saveas(2,dirFig)
 
 figure;
 plot(xEKF(1,:), 'b-'); hold on;
@@ -106,6 +108,10 @@ plot(xEKF(2,:), 'g-');
 xlabel('Time (s)'); ylabel('Accumulated position error (m)')
 legend('EKF North', 'EKF East');
 title('EKF State Vector Accumulated Position error');
+filename = ['EKF_stateVector_posErrors_accumulated','.png'];
+dirFig = fullfile('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24', filename);
+saveas(3,dirFig)
+
 % % IMU Velocity error plot
 % figure
 % plot(tVec, errVelIMU, 'b-'); hold on
@@ -129,6 +135,9 @@ plot(estIntEKF.pos(:, 2), estIntEKF.pos(:, 1), 'b-');
 xlabel('East (m)'); ylabel('North (m)');
 title('True position vs estimations');
 legend('True', 'EKF')%;, 'Skog');
+filename = ['truePos_vs_estimatedPos','.png'];
+dirFig = fullfile('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24', filename);
+saveas(4,dirFig)
 
 % EKF Position error
 % figure
@@ -149,6 +158,9 @@ plot(errPosEKF(:, 2), 'g-', 'Linewidth', 1.5);
 xlabel('Time (s)'); ylabel('Position error (m)')
 legend('EKF North', 'EKF East');%, 'SKOG North', 'SKOG East');
 title('EKF Position error');
+filename = ['EKF_estimatedPos_errors','.png'];
+dirFig = fullfile('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24', filename);
+saveas(5,dirFig)
 
 figure; 
 subplot(2,1,1), plot(errPosEKF(:,1), 'b', 'LineWidth',2), hold on, grid on, 
@@ -161,7 +173,9 @@ plot(3*sqrt(varsPosEKF(1:Config.M:end,2)), 'r', 'LineWidth',2);
 plot(-3*sqrt(varsPosEKF(1:Config.M:end,2)), 'r', 'LineWidth',2);
 xlabel('Time [s]'); ylabel('[m]'); legend('Estimation error','3\sigma envelop');
 title('Estimation error (East axis)');
-
+filename = ['EKF_estimatedPos_errors_3sigmaCovEKF','.png'];
+dirFig = fullfile('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24', filename);
+saveas(6,dirFig)
 % figure
 % plot(xEKF(:, 1), 'b-'); hold on
 % plot(xEKF(:, 2), 'g-');
@@ -170,12 +184,39 @@ title('Estimation error (East axis)');
 % xlabel('Time (s)'); ylabel('EKF Position error (m)')
 % legend('IMU North', 'IMU East');%, 'GNSS North', 'GNSS East');
 % title('EKF Position error');
-% figure
-% plot(tVec, errEucliEKF, 'b-', 'Linewidth', 1.5); hold on
-% plot(tVec, errEucliSkog, 'r-', 'Linewidth', 1.5);
-% xlabel('Time (s)'); ylabel('Absolute position error (m)')
-% legend('EKF error', 'SKOG error');
-% title('EKF Position error');
+figure;
+plot(errEucliEKF, 'b-', 'Linewidth', 1.5); hold on
+%plot(tVec, errEucliSkog, 'r-', 'Linewidth', 1.5);
+xlabel('Time (s)'); ylabel('Position error (m)')
+legend('EKF error');%, 'SKOG error');
+title('EKF Euclidean Position error');
+filename = ['EKF_euclidean_pos_error','.png'];
+dirFig = fullfile('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24', filename);
+saveas(7,dirFig)
+
+figure;
+plot(sqrt(xEKF(1,Config.M:Config.M:end).^2 + xEKF(2,Config.M:Config.M:end).^2), 'b-', 'Linewidth', 1.5); hold on
+%plot(tVec, errEucliSkog, 'r-', 'Linewidth', 1.5);
+xlabel('Time (s)'); ylabel('Position error (m)')
+legend('EKF error');%, 'SKOG error');
+title('EKF Norm EKF Error State Vector (Position)');
+filename = ['EKF_norm_stateVectorErrors_GPSavailable','.png'];
+dirFig = fullfile('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24', filename);
+saveas(8,dirFig)
+
+figure;
+plot(sqrt(xEKF(1,:).^2 + xEKF(2,:).^2), 'b-', 'Linewidth', 1.5); hold on
+%plot(tVec, errEucliSkog, 'r-', 'Linewidth', 1.5);
+xlabel('Time (s)'); ylabel('Position error (m)')
+legend('EKF error');%, 'SKOG error');
+title('EKF Norm EKF Error State Vector (Position)');
+filename = ['EKF_norm_stateVectorErrors','.png'];
+dirFig = fullfile('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24', filename);
+saveas(9,dirFig)
+
+% img = imread('D:\Documentos\MASTER ASNAT19\Semester 3\Applied project - Time Synchronization INS GNSS\Figures\BE Inertial Data\Config24\EKF_norm_stateVectorErrors.png');
+% imshow(img);
+
 % 
 % figure
 % plot(tVec, estIntSkogHistoric.timeDelay, 'b-', 'Linewidth', 1.5);

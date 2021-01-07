@@ -73,6 +73,7 @@ estInt.heading(epoch) = estInt.heading(epoch) + x(4);
 estInt.biasAcc(epoch) = x(5); % Bias Acc estimation
 estInt.biasGyro(epoch) = x(6); % Bias Gyro estimation 
 
-xEKF = xOld + x;
+% xEKF = xOld + x;
+xEKF = x;
 
 end
