@@ -11,7 +11,7 @@ rp0, rv0, rba0, rt0, sigmaPos, sigmaVel, sigmaAccBias, sigmaTd]         ...
 [tspan, p, v, a] = generateTrajectory(p0, v0, a0, tIMU, tEnd);
 
 %% Generation of measurements and EKF
-[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF, vIMUPred, pIMUPred] = simulateEstimations(          ...
+[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF] = simulateEstimations(          ...
                                                         p, tspan, M, tIMU, tDelay,  ...
                                                         p0, v0, a0,                 ...
                                                         rp0, rv0, rba0, rt0,        ...
@@ -29,6 +29,8 @@ errVelEKF   = v - vEKF;
 % errPosSkog  = abs(p - pIntSkog');
 % errVelSkog  = v - vIntSkog';
 
+sigmaPos    = sqrt(permute(PEKF(1,1,:), [3 1 2]));
+sigmaVel    = sqrt(permute(PEKF(2,2,:), [3 1 2]));
 
 %% Plots
 % True trajectory vs measurements
@@ -82,17 +84,21 @@ legend('EKF', 'Skog');
 % Estimation Error plot
 figure
 plot(tVec, errPosEKF, 'b-'); hold on;
-% plot(tVec, errPosSkog, 'r-'); 
+yline(mean(errPosEKF), 'k');
+plot(tVec, 3*sigmaPos, 'r-');
+plot(tVec, -3*sigmaPos, 'r-');
 xlabel('Time (s)'); ylabel('Position error (m)')
 title('Error in position estimations');
-legend('EKF', 'Skog');
+legend('EKF', '\mu','3\sigma');
 
 figure
 plot(tVec, errVelEKF, 'b-'); hold on;
-% plot(tVec, errVelSkog, 'r-');
+yline(mean(errVelEKF), 'k');
+plot(tVec, 3*sigmaVel, 'r-');
+plot(tVec, -3*sigmaVel, 'r-');
 xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 title('Error in velocity estimations');
-legend('EKF', 'Skog');
+legend('Estimation error', '\mu', '3\sigma');
 
 % figure; plot(tVec./1e3, sqrt(permute(abs(PEKF(1, 1, :)), [3 1 2])));
 % xlabel('Time (s)'); ylabel('Position std (m/s)');
