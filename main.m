@@ -3,23 +3,17 @@ addpath(genpath('./'));
 % Time Synchronization GNSS-aided IMU project
 % (Description of the project here)
 
-[tEnd, tIMU, tGNSS, tDelay, M, sigmaAcc, sigmaGNSS, a0, v0, p0,         ...
-rp0, rv0, rba0, rt0, sigmaPos, sigmaVel, sigmaAccBias, sigmaTd]         ...
-    = loadConfigFile();
+Config = loadConfigFile();
 
 %% Generation of true trajectory
-[tspan, p, v, a] = generateTrajectory(p0, v0, a0, tIMU, tEnd);
+[tspan, p, v, a] = generateTrajectory(Config);
 
 %% Generation of measurements and EKF
-[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF] = simulateEstimations(          ...
-                                                        p, tspan, M, tIMU, tDelay,  ...
-                                                        p0, v0, a0,                 ...
-                                                        rp0, rv0, rba0, rt0,        ...
-                                                        sigmaGNSS, sigmaAcc,        ...
-                                                        sigmaPos, sigmaVel, sigmaAccBias, sigmaTd);
+[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF] = ...
+                            simulateEstimations(p, tspan, Config);
 
 %% Results
-tVec        = 0:tIMU:tEnd;
+tVec        = 0:Config.tIMU:Config.tEnd;
 % Computation of errors
 errPosIMU   = p - pIMU;
 errVelIMU   = v - vIMU;
@@ -75,7 +69,7 @@ title('True velocity vs estimations');
 legend('True', 'EKF');
 
 figure;
-plot(tVec, biasAccEKF, 'b-'); hold on;
+plot(tVec(Config.M:Config.M:end), biasAccEKF(Config.M:Config.M:end), 'b-'); hold on;
 % plot(tVec, bIntSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Acceleration bias (m/s^2)')
 title('Standard EKF method');
