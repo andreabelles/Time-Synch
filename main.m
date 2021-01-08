@@ -11,7 +11,7 @@ rp0, rv0, rba0, rt0, sigmaPos, sigmaVel, sigmaAccBias, sigmaTd]         ...
 [tspan, p, v, a] = generateTrajectory(p0, v0, a0, tIMU, tEnd);
 
 %% Generation of measurements and EKF
-[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog] = simulateEstimations(          ...
+[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF, vIMUPred, pIMUPred] = simulateEstimations(          ...
                                                         p, tspan, M, tIMU, tDelay,  ...
                                                         p0, v0, a0,                 ...
                                                         rp0, rv0, rba0, rt0,        ...
@@ -20,20 +20,14 @@ rp0, rv0, rba0, rt0, sigmaPos, sigmaVel, sigmaAccBias, sigmaTd]         ...
 
 %% Results
 tVec        = 0:tIMU:tEnd;
-pIntEKF     = xEKF(1, :);
-vIntEKF     = xEKF(2, :);
-bIntEKF     = xEKF(3, :);
-pIntSkog    = xSkog(1, :);
-vIntSkog    = xSkog(2, :);
-bIntSkog    = xSkog(3, :);
 % Computation of errors
-errPosIMU   = abs(p - pIMU);
+errPosIMU   = p - pIMU;
 errVelIMU   = v - vIMU;
-errPosGNSS  = abs(p - pGNSS);
-errPosEKF   = abs(p - pIntEKF');
-errVelEKF   = v - vIntEKF';
-errPosSkog  = abs(p - pIntSkog');
-errVelSkog  = v - vIntSkog';
+errPosGNSS  = p - pGNSS;
+errPosEKF   = p - pEKF;
+errVelEKF   = v - vEKF;
+% errPosSkog  = abs(p - pIntSkog');
+% errVelSkog  = v - vIntSkog';
 
 
 %% Plots
@@ -63,23 +57,23 @@ title('IMU-only Velocity error');
 % True trajectory vs estimated trajectory
 figure;
 plot(tVec, p, 'k-', 'Linewidth', 1); hold on;
-plot(tVec, pIntEKF, 'b-'); 
+plot(tVec, pEKF, 'b-'); 
 % plot(tVec, pIntSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Position (m)')
 title('True position vs estimations');
-legend('True', 'EKF', 'Skog');
+legend('True', 'EKF');
 
 % True Velocity vs estimated velocity
 figure;
 plot(tVec, v, 'k-', 'Linewidth', 1); hold on;
-plot(tVec, vIntEKF, 'b-'); 
+plot(tVec, vEKF, 'b-'); 
 % plot(tVec, vIntSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Velocity (m/s)')
 title('True velocity vs estimations');
-legend('True', 'EKF', 'Skog');
+legend('True', 'EKF');
 
 figure;
-plot(tVec, bIntEKF, 'b-'); hold on;
+plot(tVec, biasAccEKF, 'b-'); hold on;
 % plot(tVec, bIntSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Acceleration bias (m/s^2)')
 title('Standard EKF method');
