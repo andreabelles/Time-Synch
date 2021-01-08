@@ -29,35 +29,36 @@ sigmaVel    = sqrt(permute(PEKF(2,2,:), [3 1 2]));
 %% Plots
 % True trajectory vs measurements
 figure;
-plot(tVec, p, 'k-', 'Linewidth', 1); hold on;
-plot(tVec, pIMU, 'b.'); 
+plot(tVec, p, 'k-', 'Linewidth', 1.2); hold on;
+plot(tVec, pIMU, 'b-', 'Linewidth', 1.2); 
 plot(tVec, pGNSS, 'r.');
+plot(tVec, pEKF, 'g-', 'Linewidth', 1.2); 
 xlabel('Time (s)'); ylabel('Position (m)')
-title('True trajectory');
-legend('True', 'IMU', 'GNSS');
+title('True trajectory vs estimated');
+legend('True', 'IMU', 'GNSS', 'EKF');
 
-% IMU Position error plot
-figure
-plot(tVec, errPosIMU, 'b-'); hold on
-plot(tVec, errPosGNSS, 'r.');
-xlabel('Time (s)'); ylabel('Position error (m)')
-legend('IMU', 'GNSS');
-title('IMU-only & GNSS-only Position error');
+% % IMU Position error plot
+% figure
+% plot(tVec, errPosIMU, 'b-'); hold on
+% plot(tVec, errPosGNSS, 'r.');
+% xlabel('Time (s)'); ylabel('Position error (m)')
+% legend('IMU', 'GNSS');
+% title('IMU-only & GNSS-only Position error');
 
 % IMU Velocity error plot
-figure
-plot(tVec, errVelIMU, 'b-'); hold on
-xlabel('Time (s)'); ylabel('Velocity error (m/s)')
-title('IMU-only Velocity error');
+% figure
+% plot(tVec, errVelIMU, 'b-'); hold on
+% xlabel('Time (s)'); ylabel('Velocity error (m/s)')
+% title('IMU-only Velocity error');
 
 % True trajectory vs estimated trajectory
-figure;
-plot(tVec, p, 'k-', 'Linewidth', 1); hold on;
-plot(tVec, pEKF, 'b-'); 
-% plot(tVec, pIntSkog, 'r-'); 
-xlabel('Time (s)'); ylabel('Position (m)')
-title('True position vs estimations');
-legend('True', 'EKF');
+% figure;
+% plot(tVec, p, 'k-', 'Linewidth', 1); hold on;
+% plot(tVec, pEKF, 'b-'); 
+% % plot(tVec, pIntSkog, 'r-'); 
+% xlabel('Time (s)'); ylabel('Position (m)')
+% title('True position vs estimated');
+% legend('True', 'EKF');
 
 % True Velocity vs estimated velocity
 figure;
@@ -65,18 +66,19 @@ plot(tVec, v, 'k-', 'Linewidth', 1); hold on;
 plot(tVec, vEKF, 'b-'); 
 % plot(tVec, vIntSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Velocity (m/s)')
-title('True velocity vs estimations');
+title('True velocity vs estimated');
 legend('True', 'EKF');
 
 figure;
 plot(tVec(Config.M:Config.M:end), biasAccEKF(Config.M:Config.M:end), 'b-'); hold on;
 % plot(tVec, bIntSkog, 'r-'); 
-xlabel('Time (s)'); ylabel('Acceleration bias (m/s^2)')
-title('Standard EKF method');
-legend('EKF', 'Skog');
+xlabel('Time (s)'); ylabel('Bias (m/s^2)')
+title('Accelerometer bias estimation');
+legend('EKF');
 
 % Estimation Error plot
 figure
+subplot(2,1,1)
 plot(tVec, errPosEKF, 'b-'); hold on;
 yline(mean(errPosEKF), 'k');
 plot(tVec, 3*sigmaPos, 'r-');
@@ -84,8 +86,15 @@ plot(tVec, -3*sigmaPos, 'r-');
 xlabel('Time (s)'); ylabel('Position error (m)')
 title('Error in position estimations');
 legend('EKF', '\mu','3\sigma');
+subplot(2,1,2)
+plot(tVec, errPosIMU, 'b-'); hold on;
+plot(tVec, errPosGNSS, 'r.');
+xlabel('Time (s)'); ylabel('Position error (m)')
+legend('IMU-only', 'GNSS-only')
+title('IMU-only and GNSS-only Position error');
 
 figure
+subplot(2,1,1)
 plot(tVec, errVelEKF, 'b-'); hold on;
 yline(mean(errVelEKF), 'k');
 plot(tVec, 3*sigmaVel, 'r-');
@@ -93,6 +102,10 @@ plot(tVec, -3*sigmaVel, 'r-');
 xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 title('Error in velocity estimations');
 legend('Estimation error', '\mu', '3\sigma');
+subplot(2,1,2)
+plot(tVec, errVelIMU, 'b-');
+xlabel('Time (s)'); ylabel('Velocity error (m/s)')
+title('IMU-only Velocity error');
 
 % figure; plot(tVec./1e3, sqrt(permute(abs(PEKF(1, 1, :)), [3 1 2])));
 % xlabel('Time (s)'); ylabel('Position std (m/s)');

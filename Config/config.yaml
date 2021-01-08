@@ -6,7 +6,7 @@ fIMU:           100     # Hz        IMU and EKF rate
 fGNSS:          1       # Hz        GNSS rate
 tDelay:         0     # seconds   GNSS observations delay
 #
-sigmaAcc:       0.01    # m/s^2     STD of the accelerometer
+sigmaAcc:       0.1    # m/s^2     STD of the accelerometer
 sigmaGNSS:      10   # m         STD of the GNSS module
 # 
 a0:             0       # m/s^2     Initial acceleration
@@ -22,5 +22,5 @@ rt0:             0  # s         Initial time delay
 # COVARIANCE MATRIX INITIALIZATION
 sigmaPos:       0.5       # m         Initial STD of the position error
 sigmaVel:       0.5      # m/s       Initial STD of the velocity error
-sigmaAccBias:   0.5   # m/s^2     Initial STD of the acceleration bias error
+sigmaAccBias:   0.1   # m/s^2     Initial STD of the acceleration bias error
 sigmaTd:        0.1    # s         Initial STD of the time delay error

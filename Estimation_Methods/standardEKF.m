@@ -29,7 +29,7 @@ pEKF(k) = pEKF(k-1) + 0.5 * (vEKF(k) + vEKF(k-1)) * tIMU;
 
 % Initialization
 F = [0 1 0; 0 0 1; 0 0 0];
-sigmaAccBiasMeas = 0.0001;       % TO BE SET IN CONFIG FILE
+sigmaAccBiasMeas = 0.5;       % TO BE SET IN CONFIG FILE
 Q = [0 0 0; 0 sigmaAcc^2 0; 0 0 sigmaAccBiasMeas^2];  
 
 % Discrete transition model

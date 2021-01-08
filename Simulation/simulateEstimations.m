@@ -42,7 +42,7 @@ xSkog(4, 1)  = Config.rt0;
 
 for k = 2:1:nPts
     % IMU measurements generation
-    measAcc(k) = Config.a0 + normrnd(0,Config.sigmaAcc);
+    measAcc(k) = Config.a0 + 0.01 + normrnd(0,Config.sigmaAcc);
     % GNSS measurements generation
     if mod(k,Config.M) == 0 && (k - Config.tDelay/Config.tIMU)>0
         pGNSS(k) = p(k - Config.tDelay/Config.tIMU) + normrnd(0,Config.sigmaGNSS);
