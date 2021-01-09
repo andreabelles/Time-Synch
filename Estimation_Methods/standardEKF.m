@@ -7,10 +7,7 @@ function [xEst, PEst, vEKF, pEKF, biasAccEKF, measAccCorr] = standardEKF(xOld, .
                                                                         pEKF, ...
                                                                         vEKF, ...
                                                                         biasAccEKF, ...
-                                                                        tIMU, ...
-                                                                        sigmaAcc, ...
-                                                                        sigmaGNSS, ...
-                                                                        sigmaAccBias)
+                                                                        Config)
 
 % EKF:  This function estimates the position, velocity and bias based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
@@ -21,20 +18,20 @@ function [xEst, PEst, vEKF, pEKF, biasAccEKF, measAccCorr] = standardEKF(xOld, .
 %
 % Outputs:  delta x:      Error state vector estimation
   
-% Sensor error compensation
+% Sensor error compensation: Get IMU measurements estimations from IMU
+% measurements
 measAccCorr(k) = measAcc(k) - biasAccEKF(k-1);
-% Strapdown equations updated
-vEKF(k) = vEKF(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * tIMU;
-pEKF(k) = pEKF(k-1) + 0.5 * (vEKF(k) + vEKF(k-1)) * tIMU;
+% Navigation equations computation: Update corrected inertial navigation solution
+vEKF(k) = vEKF(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * Config.tIMU;
+pEKF(k) = pEKF(k-1) + 0.5 * (vEKF(k) + vEKF(k-1)) * Config.tIMU;
 
 % Initialization
 F = [0 1 0; 0 0 1; 0 0 0];
-sigmaAccBiasMeas = 0.5;       % TO BE SET IN CONFIG FILE
-Q = [0 0 0; 0 sigmaAcc^2 0; 0 0 sigmaAccBiasMeas^2];  
+Q = [0 0 0; 0 Config.varAccNoise 0; 0 0 Config.varAccBiasNoise];  
 
 % Discrete transition model
-Fk = eye(size(F)) + tIMU*F;
-Qk = tIMU*Q;
+Fk = eye(size(F)) + Config.tIMU*F;
+Qk = Config.tIMU*Q;
 
 % Initialize state for close loop
 xOld(1:end)  = 0; % xOld(1:2)  = 0;
@@ -46,7 +43,7 @@ PEst = Fk*POld*Fk' + Qk;
 
 if (~isnan(pGNSS)) % If GNSS position is available
     H = [1 0 0];
-    R = sigmaGNSS^2;
+    R = Config.varPosGNSS;
     K = (PEst*H')/(H*PEst*H' + R);
     z = pGNSS - pEKF(k);
     dz = z - H*xEst;
