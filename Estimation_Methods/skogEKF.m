@@ -109,15 +109,15 @@ if(~isnan(pGNSS)) % If GNSS position is available
     
     % Innovation vector bias
     d = measAccInt * (1/2) * (timeDelayPredAtDelay^2); % Eq. (23)
-    
-    % Factors to compute the covariance matrix of the augmented system
+   
+%     % Factors to compute the covariance matrix of the augmented system
     expX = pinv(eye(size(FktimeToDelay))-FktimeToDelay) * (-(1/2) * Kp * measAccInt * PPredAtDelay(4,4)); % Eq. (29)
     piFactor = (1/4)*(measAccInt^2)*(3*(PPredAtDelay(4,4)^2) - 2*(expX(4)^4)); % Eq. (27)
     gammaFactor = (PPredAtDelay(4,4)*expX + 2*expX(4)*(PPredAtDelay(1:4,4) - expX(4)*expX))*(measAccInt/2); % Eq. (28)
     
     % Update state vector and covariance matrix at time delay (epoch-Td)
-    xUpdatedAtDelay = xPredAtDelay + Kp*(dz - d); % Eq. (25)
-    PUpdatedAtDelay = PPredAtDelay - Kp*H*PPredAtDelay...*(Kp*H)' + Kp*R*Kp' ...   % Eq. (26)
+    xUpdatedAtDelay = xPredAtDelay + K*(dz - d); % Eq. (25)
+    PUpdatedAtDelay = PPredAtDelay - K*H*PPredAtDelay*(Kp*H)' + Kp*R*Kp' ...   % Eq. (26)
                     + Kp*piFactor*Kp' - FktimeToDelay*gammaFactor*Kp' - Kp*gammaFactor'*FktimeToDelay';
     
     % Constrained state estimation: Estimate projection
@@ -147,5 +147,8 @@ pSkog(k) = pSkog(k) + x(1); % Position correction
 vSkog(k) = vSkog(k) + x(2); % Velocity correction
 biasAccSkog(k) = x(3);  % Bias Acc estimation
 timeDelaySkog(k) = timeDelaySkog(k) + x(4); % Time Delay correction
+
+if timeDelaySkog(k) < 0, timeDelaySkog(k) = 0; end
+% if timeDelaySkog(k) > tspan(k), timeDelaySkog(k) = tspan(k); end
 
 end
