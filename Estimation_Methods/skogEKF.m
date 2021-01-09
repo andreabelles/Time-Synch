@@ -36,7 +36,7 @@ Q = [0 0 0 0; ...
 Fk = eye(size(F)) + Config.tIMU*F;
 Qk = Config.tIMU*Q;
 
-% Initialize state for close loop
+% Initialize state to 0 for close loop
 xOld(1:end)  = 0; % xOld(1:2)  = 0;
 
 % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1)
@@ -140,7 +140,6 @@ if(~isnan(pGNSS)) % If GNSS position is available
     % TODO: Implement in case we want to save and plot estimations in the
     % past (at delay)
 end
-
 %% CLOSED LOOP CORRECTION
 % GNSS/INS Integration navigation solution at epoch
 % Output variables in the present

@@ -1,5 +1,5 @@
-function [xEst, PEst, vEKF, pEKF, biasAccEKF, measAccCorr] = standardEKF(xOld, ...
-                                                                        POld, ...
+function [x, PHistoric, vEKF, pEKF, biasAccEKF, measAccCorr] = standardEKF(xOld, ...
+                                                                        PHistoric, ...
                                                                         pGNSS, ...
                                                                         k, ...
                                                                         measAcc, ...
@@ -17,10 +17,14 @@ function [xEst, PEst, vEKF, pEKF, biasAccEKF, measAccCorr] = standardEKF(xOld, .
 %           pIMU:   Position estimated by the IMU
 %
 % Outputs:  delta x:      Error state vector estimation
-  
+
+% From all the previous covariance matrix, we select the previous one
+POld           = PHistoric(:, :, k-1); 
+
 % Sensor error compensation: Get IMU measurements estimations from IMU
 % measurements
 measAccCorr(k) = measAcc(k) - biasAccEKF(k-1);
+
 % Navigation equations computation: Update corrected inertial navigation solution
 vEKF(k) = vEKF(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * Config.tIMU;
 pEKF(k) = pEKF(k-1) + 0.5 * (vEKF(k) + vEKF(k-1)) * Config.tIMU;
@@ -33,25 +37,38 @@ Q = [0 0 0; 0 Config.varAccNoise 0; 0 0 Config.varAccBiasNoise];
 Fk = eye(size(F)) + Config.tIMU*F;
 Qk = Config.tIMU*Q;
 
-% Initialize state for close loop
+% Initialize state to 0 for close loop
 xOld(1:end)  = 0; % xOld(1:2)  = 0;
 
-% System model transition
-xEst = Fk * xOld;
+% Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1)
+x = Fk * xOld;
 % Covariance prediction
-PEst = Fk*POld*Fk' + Qk;
+PPred = Fk*POld*Fk' + Qk;
+PHistoric(:,:,k) = PPred; % Save in case no GNSS measurements
 
 if (~isnan(pGNSS)) % If GNSS position is available
-    H = [1 0 0];
+    
+    % Measurement model
+    z = pGNSS - pEKF(k);  % Observation vector: GPS - prediction INS  
+    
+    H = [1 0 0]; % Eq. (21)
     R = Config.varPosGNSS;
-    K = (PEst*H')/(H*PEst*H' + R);
-    z = pGNSS - pEKF(k);
-    dz = z - H*xEst;
-    xEst = xEst + K*dz;
-    PEst = PEst - K*H*PEst;
+    
+    % Kalman filter gain computation
+    K = (PPred*H')/(H*PPred*H' + R); % From Table 1
+    
+    % Innovation vector computation 
+    dz = z - H * x; % Eq. (20)
+    
+    % Update state vector and covariance matrix
+    x = x + K*dz;
+    PUpdated = PPred - K*H*PPred;
+    PHistoric(:,:,k) = PUpdated;
 end
-
-pEKF(k) = pEKF(k) + xEst(1);
-vEKF(k) = vEKF(k) + xEst(2);
-biasAccEKF(k) = xEst(3);
+%% CLOSED LOOP CORRECTION
+% GNSS/INS Integration navigation solution at epoch
+% Output variables in the present
+pEKF(k) = pEKF(k) + x(1); % Position correction
+vEKF(k) = vEKF(k) + x(2); % Velocity correction
+biasAccEKF(k) = x(3); % Bias Acc estimation
 end
