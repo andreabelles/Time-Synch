@@ -14,7 +14,6 @@ Config = loadConfigFile();
 
 %% Results
 tVec        = 0:Config.tIMU:Config.tEnd;
-
 % Computation of errors
 % IMU errors (INS)
 errPosIMU   = p - pIMU;
@@ -34,6 +33,19 @@ sigmaVelEKF    = sqrt(permute(PEKF(2,2,:), [3 1 2]));
 % STD of Skog EKF estimations
 sigmaPosSkog    = sqrt(permute(PSkog(1,1,:), [3 1 2]));
 sigmaVelSkog    = sqrt(permute(PSkog(2,2,:), [3 1 2]));
+
+rmsePosIMU = sqrt(mean(errPosIMU.^2));
+rmseVelIMU = sqrt(mean(errVelIMU.^2));
+rmsePosGNSS = sqrt(nanmean(errPosGNSS.^2));
+rmsePosEKF = sqrt(mean(errPosEKF.^2));
+rmseVelEKF = sqrt(mean(errVelEKF.^2));
+rmsePosSkog = sqrt(mean(errPosSkog.^2));
+rmseVelSkog = sqrt(mean(errVelSkog.^2));
+
+fprintf('\t\t ==== RMSE ==== \n');
+fprintf('\t\t\t IMU-only \t GNSS-only \t Standard EKF \t Skog EKF \n');
+fprintf('Position: \t %.4f \t %.4f \t %.4f \t\t %.4f \n', rmsePosIMU, rmsePosGNSS, rmsePosEKF, rmsePosSkog);
+fprintf('Velocity: \t %.4f \t \t\t \t %.4f \t\t %.4f \n', rmseVelIMU, rmseVelEKF, rmseVelSkog);
 
 %% Plots
 % True trajectory vs measurements

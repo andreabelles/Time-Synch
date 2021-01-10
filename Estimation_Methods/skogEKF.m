@@ -123,7 +123,33 @@ if(~isnan(pGNSS)) % If GNSS position is available
     % Constrained state estimation: Estimate projection
     % TODO 
     xConstrainedAtDelay = xUpdatedAtDelay;
+    % Quadratic programming
+%     H = [0 0 0 0; 0 0 0 0; 0 0 0 0; 0 0 0 1];
+%     % f = [0 0 0 1]';
+%     f = [0 0 0 1]';
+%     A = [0 0 0 -1; 0 0 0 1]; % Constraints: (1) -dTd <= Td equivalent to dT >= -Td
+%                              %              (2) dTd <= tspan - Td            
+%     b = [timeDelaySkog(k) tspan(k)-timeDelaySkog(k)];
+%     % b = [1; 1];
+%     lb = [0 0 0 -1];
+%     ub = [0 0 0 1];
+%     [xConstrainedAtDelay,fval] = quadprog(H,f,A,b,[],[],lb,ub);
+    % Linear programming
+    % [xConstrainedAtDelay,fval] = linprog(f,A,b,[],[],lb,ub);
+    % [xConstrainedAtDelay,fval] = fmincon(@(x)x(4),xUpdatedAtDelay,A,b,[],[],lb,ub);
     
+    % LS: Simon 2006, eq. (7.149)
+    % xConstrainedAtDelay = xPredAtDelay - A'*pinv(A*A')*(A*xUpdatedAtDelay - timeDelaySkog(k));
+    % MP: Simon 2006, eq. (7.150)
+    % xConstrainedAtDelay = xUpdatedAtDelay - PUpdatedAtDelay*A'*pinv(A*PUpdatedAtDelay*A')*(A*xUpdatedAtDelay - timeDelaySkog(k));
+    
+    % Ansara, Molaei, et al., 2017
+%     C = [0 0 0 1];
+%     N = zeros(size(xPredAtDelay));
+%     N(:,4) = C';
+%     alpha = min(-C(4))
+%     B = alpha*(eye(size(xPredAtDelay)) - N*pinv((N'*N))*N;
+%     xConstrainedAtDelay = xPredAtDelay + B*K*dz; % Kp o K?
     %% CLOSED LOOP CORRECTION
     % GNSS/INS Integration navigation solution at time delay (epoch-Td)
     % Discrete-time state transition model
@@ -139,6 +165,10 @@ if(~isnan(pGNSS)) % If GNSS position is available
     %% Output variables in the past
     % TODO: Implement in case we want to save and plot estimations in the
     % past (at delay)
+%     pSkogAtDelay(k) = pSkog(k) + xConstrainedAtDelay(1); % Position correction
+%     vSkogAtDelay(k) = vSkogPredAtDelay + xConstrainedAtDelay(2); % Velocity correction
+%     biasAccSkogAtDelay(k) = xConstrainedAtDelay(3);  % Bias Acc estimation
+%     timeDelaySkogAtDelay(k) = timeDelaySkog(k) + xConstrainedAtDelay(4); % Time Delay correction
 end
 %% CLOSED LOOP CORRECTION
 % GNSS/INS Integration navigation solution at epoch
@@ -148,7 +178,7 @@ vSkog(k) = vSkog(k) + x(2); % Velocity correction
 biasAccSkog(k) = x(3);  % Bias Acc estimation
 timeDelaySkog(k) = timeDelaySkog(k) + x(4); % Time Delay correction
 
-if timeDelaySkog(k) < 0, timeDelaySkog(k) = 0; end
+% if timeDelaySkog(k) < 0, timeDelaySkog(k) = 0; end
 % if timeDelaySkog(k) > tspan(k), timeDelaySkog(k) = tspan(k); end
 
 end
