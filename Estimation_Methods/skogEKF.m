@@ -95,7 +95,7 @@ if(~isnan(pGNSS)) % If GNSS position is available
     % Measurement model
     z = pGNSS - pSkogPredAtDelay; % Observation vector: GPS - prediction INS at epoch-Td
     
-    H = [1 0 0 -vSkogPredAtDelay]; % Eq. (21)
+    H = [1 0 0 0]; % Eq. (21)
     R = Config.varPosGNSS; 
     
     % Kalman filter gain computation
@@ -105,39 +105,43 @@ if(~isnan(pGNSS)) % If GNSS position is available
     dz = z - H * xPredAtDelay; % Eq. (20)
     
     % One-step-ahead Kalman prediction gain
-    Kp = FktimeToDelay*K; % From eq. (5) and (6)
+    %Kp = FktimeToDelay*K; % From eq. (5) and (6)
     
     % Innovation vector bias
-    d = measAccInt * (1/2) * (timeDelayPredAtDelay^2); % Eq. (23)
+    %d = measAccInt * (1/2) * (timeDelayPredAtDelay^2); % Eq. (23)
    
 %     % Factors to compute the covariance matrix of the augmented system
-    expX = pinv(eye(size(FktimeToDelay))-FktimeToDelay) * (-(1/2) * Kp * measAccInt * PPredAtDelay(4,4)); % Eq. (29)
-    piFactor = (1/4)*(measAccInt^2)*(3*(PPredAtDelay(4,4)^2) - 2*(expX(4)^4)); % Eq. (27)
-    gammaFactor = (PPredAtDelay(4,4)*expX + 2*expX(4)*(PPredAtDelay(1:4,4) - expX(4)*expX))*(measAccInt/2); % Eq. (28)
+    %expX = pinv(eye(size(FktimeToDelay))-FktimeToDelay) * (-(1/2) * Kp * measAccInt * PPredAtDelay(4,4)); % Eq. (29)
+    %piFactor = (1/4)*(measAccInt^2)*(3*(PPredAtDelay(4,4)^2) - 2*(expX(4)^4)); % Eq. (27)
+    %gammaFactor = (PPredAtDelay(4,4)*expX + 2*expX(4)*(PPredAtDelay(1:4,4) - expX(4)*expX))*(measAccInt/2); % Eq. (28)
     
     % Update state vector and covariance matrix at time delay (epoch-Td)
-    xUpdatedAtDelay = xPredAtDelay + K*(dz - d); % Eq. (25)
-    PUpdatedAtDelay = PPredAtDelay - K*H*PPredAtDelay*(Kp*H)' + Kp*R*Kp' ...   % Eq. (26)
-                    + Kp*piFactor*Kp' - FktimeToDelay*gammaFactor*Kp' - Kp*gammaFactor'*FktimeToDelay';
+    xUpdatedAtDelay = xPredAtDelay + K*dz; % Eq. (25)
+    PUpdatedAtDelay = PPredAtDelay - K*H*PPredAtDelay;%*(Kp*H)' + Kp*R*Kp' ...   % Eq. (26)
+                    %+ Kp*piFactor*Kp' - FktimeToDelay*gammaFactor*Kp' - Kp*gammaFactor'*FktimeToDelay';
     
     % Constrained state estimation: Estimate projection
     % TODO 
-    xConstrainedAtDelay = xUpdatedAtDelay;
+    % xConstrainedAtDelay = xUpdatedAtDelay;
     % Quadratic programming
-%     H = [0 0 0 0; 0 0 0 0; 0 0 0 0; 0 0 0 1];
-%     % f = [0 0 0 1]';
-%     f = [0 0 0 1]';
-%     A = [0 0 0 -1; 0 0 0 1]; % Constraints: (1) -dTd <= Td equivalent to dT >= -Td
-%                              %              (2) dTd <= tspan - Td            
-%     b = [timeDelaySkog(k) tspan(k)-timeDelaySkog(k)];
-%     % b = [1; 1];
-%     lb = [0 0 0 -1];
-%     ub = [0 0 0 1];
+    % H = [2 0 0 0; 0 2 0 0; 0 0 2 0; 0 0 0 2];
+%     H = pinv(PUpdatedAtDelay);
+%     f = (2*xUpdatedAtDelay'*H)';
+     A = [0 0 0 -1; 0 0 0 1]; % Constraints: (1) -dTd <= Td equivalent to dT >= -Td
+% %                              %              (2) dTd <= tspan - Td            
+     b = [timeDelaySkog(k) tspan(k)-timeDelaySkog(k)];
+% %     % b = [1; 1];
+%     lb = [-100 -100 -100 -100];
+%     ub = [100 100 100 100];
 %     [xConstrainedAtDelay,fval] = quadprog(H,f,A,b,[],[],lb,ub);
+%     
     % Linear programming
-    % [xConstrainedAtDelay,fval] = linprog(f,A,b,[],[],lb,ub);
-    % [xConstrainedAtDelay,fval] = fmincon(@(x)x(4),xUpdatedAtDelay,A,b,[],[],lb,ub);
-    
+    % [xErrConstrainedAtDelay,fval] = linprog(f,A,b,[],[],lb,ub);
+    % [xErrConstrainedAtDelay,fval] = fmincon(@(x)0.5*(x(1)^2 + x(2)^2 + x(3)^2 + x(4)^2),xUpdatedAtDelay,A,b,[],[],lb,ub);
+    f = @(x) (x - xUpdatedAtDelay)'*pinv(PUpdatedAtDelay)*(x - xUpdatedAtDelay);
+    X0 = 0.1*ones(4,1);
+    [xConstrainedAtDelay,fval] = fmincon(f,X0,A,b,[],[],[],[]);
+    % xConstrainedAtDelay = xUpdatedAtDelay + xErrConstrainedAtDelay;
     % LS: Simon 2006, eq. (7.149)
     % xConstrainedAtDelay = xPredAtDelay - A'*pinv(A*A')*(A*xUpdatedAtDelay - timeDelaySkog(k));
     % MP: Simon 2006, eq. (7.150)
@@ -177,8 +181,5 @@ pSkog(k) = pSkog(k) + x(1); % Position correction
 vSkog(k) = vSkog(k) + x(2); % Velocity correction
 biasAccSkog(k) = x(3);  % Bias Acc estimation
 timeDelaySkog(k) = timeDelaySkog(k) + x(4); % Time Delay correction
-
-% if timeDelaySkog(k) < 0, timeDelaySkog(k) = 0; end
-% if timeDelaySkog(k) > tspan(k), timeDelaySkog(k) = tspan(k); end
 
 end
