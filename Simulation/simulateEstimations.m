@@ -42,7 +42,7 @@ estEKF.biasGyro           = zeros(nPts,1);
 estEKF.biasGyro(1)        = Config.xbg0;
 % Error-State Vector
 % xEKF        = zeros(6,nPts);
-xEKF        = zeros(3,nPts);
+xEKF        = zeros(4,nPts);
 % Covariance matrix
 % PEKF        = zeros(6,6,nPts);
 % PEKF(:,:,1) = diag([Config.sigmaInitNorthPos^2, ...
@@ -51,10 +51,11 @@ xEKF        = zeros(3,nPts);
 %                     Config.sigmaInitHeading^2,  ...
 %                     Config.sigmaInitAccBias^2,  ...
 %                     Config.sigmaInitGyroBias^2]);
-PEKF        = zeros(3,3,nPts);
+PEKF        = zeros(4,4,nPts);
 PEKF(:,:,1) = diag([Config.sigmaInitNorthPos^2, ...
                     Config.sigmaInitEastPos^2,  ...
-                    Config.sigmaInitVel^2]);
+                    Config.sigmaInitVel^2,      ...
+                    Config.sigmaInitAccBias^2]);
 
 % Skog EKF : 
 % GNSS/INS Integration Navigation Solution (IMU corrected with GNSS) at

@@ -1,7 +1,7 @@
 function [measAcc, measGyro, pGNSS] = generateMeasurements(pTrue, Config, k)
 
 % IMU measurements generation
-measAcc = Config.a0 + normrnd(0,sqrt(Config.varMeasAcc));
+measAcc = Config.a0 + Config.biasMeasAcc + normrnd(0,sqrt(Config.varMeasAcc));
 measGyro = Config.headingRate0 + normrnd(0,sqrt(Config.varMeasGyro));
 
 % GNSS measurements generation

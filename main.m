@@ -27,7 +27,7 @@ errPosGNSS  = trueTrajectory(:, 1:2) - pGNSS;       % errPosGNSS: [errorNorth, e
 % Standard EKF errors
 errPosEKF   = trueTrajectory(:, 1:2) - estEKF.pos;    % errPosEKF: [errorNorth, errorEast]
 errVelEKF   = trueTrajectory(:, 3) - estEKF.vel;
-% errHeadingEKF   = trueTrajectory(:, 3) - estEKF.heading;
+errHeadingEKF   = trueTrajectory(:, 5) - estEKF.heading;
 
 % Skog EKF errors
 % errPosSkog  = trueTrajectory(:, 1:2) - estSkog.pos;    % errPosEKF: [errorNorth, errorEast]
@@ -96,23 +96,30 @@ xlabel('Time (s)'); ylabel('Velocity (m/s)')
 title('True velocity vs estimated');
 legend('True', 'EKF');%, 'Skog');
 
-% % True heading vs estimated heading
-% figure;
-% plot(tVec, trueTrajectory(:, 5), 'k-', 'Linewidth', 1.2); hold on;
-% plot(tVec, estEKF.heading, 'b-',  'Linewidth', 1.2); 
-% % plot(tVec, estSkog.heading, 'r-', 'Linewidth', 1.2); 
-% xlabel('Time (s)'); ylabel('Heading (deg)')
-% title('True heading vs estimations');
-% legend('True', 'EKF');%, 'Skog');
+% True heading vs estimated heading
+figure;
+plot(tVec, trueTrajectory(:, 5), 'k-', 'Linewidth', 1.2); hold on;
+plot(tVec, estEKF.heading, 'b-',  'Linewidth', 1.2); 
+% plot(tVec, estSkog.heading, 'r-', 'Linewidth', 1.2); 
+xlabel('Time (s)'); ylabel('Heading (deg)')
+title('True heading vs estimations');
+legend('True', 'EKF');%, 'Skog');
 
-% % Accelerometer Bias
-% figure;
-% plot(tVec(Config.M:Config.M:end), estEKF.biasAcc(Config.M:Config.M:end), 'b-'); hold on;
-% % plot(tVec(Config.M:Config.M:end), estSkog.biasAcc(Config.M:Config.M:end), 'r-'); 
-% xlabel('Time (s)'); ylabel('Bias (m/s^2)')
-% title('Accelerometer bias estimation');
-% legend('EKF');%, 'Skog');
-% 
+% Accelerometer Bias
+figure;
+plot(tVec(Config.M:Config.M:end), estEKF.biasAcc(Config.M:Config.M:end), 'b-'); hold on;
+% plot(tVec(Config.M:Config.M:end), estSkog.biasAcc(Config.M:Config.M:end), 'r-'); 
+xlabel('Time (s)'); ylabel('Bias (m/s^2)')
+title('Accelerometer bias estimation');
+legend('EKF');%, 'Skog');
+
+figure;
+plot(tVec(Config.M:Config.M:end), xEKF(4,Config.M:Config.M:end), 'b-'); hold on;
+% plot(tVec(Config.M:Config.M:end), xSkog(3,Config.M:Config.M:end), 'r-');
+xlabel('Time (s)'); ylabel('Error Bias (m/s^2)')
+title('Accelerometer bias error-state EKF');
+legend('EKF');%, 'Skog');
+
 % % Gyroscope Bias
 % figure;
 % plot(tVec(Config.M:Config.M:end), estEKF.biasGyro(Config.M:Config.M:end), 'b-'); hold on;
@@ -208,25 +215,25 @@ plot(tVec, errVelIMU, 'b-');
 xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 title('IMU-only Velocity error');
 
-% % Heading Estimation Error plot
-% figure
-% subplot(2,1,1)
-% p1 = plot(tVec, errHeadingEKF, 'b-'); hold on;
-% % p2 = plot(tVec, errHeadingSkog, 'r-');
-% % yline(mean(errVelEKF), 'k');
+% Heading Estimation Error plot
+figure
+subplot(2,1,1)
+p1 = plot(tVec, errHeadingEKF, 'b-'); hold on;
+% p2 = plot(tVec, errHeadingSkog, 'r-');
+% yline(mean(errVelEKF), 'k');
 % p3 = plot(tVec, 3*sigmaErrHeadingEKF, 'c-');
 % p4 = plot(tVec, -3*sigmaErrHeadingEKF, 'c-');
-% % p5 = plot(tVec, 3*sigmaHeadingSkog, 'm-');
-% % p6 = plot(tVec, -3*sigmaHeadingSkog, 'm-');
-% xlabel('Time (s)'); ylabel('Heading error (deg)')
-% title('Error in heading estimations');
-% % h = [p1 p2 p3 p5];
-% % legend(h,'EKF', 'Skog','3\sigma EKF', '3\sigma Skog');
-% legend('EKF', '3\sigma EKF');
-% subplot(2,1,2)
-% plot(tVec, errHeadingIMU, 'b-');
-% xlabel('Time (s)'); ylabel('Heading error (deg)')
-% title('IMU-only Heading error');
+% p5 = plot(tVec, 3*sigmaHeadingSkog, 'm-');
+% p6 = plot(tVec, -3*sigmaHeadingSkog, 'm-');
+xlabel('Time (s)'); ylabel('Heading error (deg)')
+title('Error in heading estimations');
+% h = [p1 p2 p3 p5];
+% legend(h,'EKF', 'Skog','3\sigma EKF', '3\sigma Skog');
+legend('EKF');%, '3\sigma EKF');
+subplot(2,1,2)
+plot(tVec, errHeadingIMU, 'b-');
+xlabel('Time (s)'); ylabel('Heading error (deg)')
+title('IMU-only Heading error');
 
 % ------------------------------------------------------------------------
 % IMU & GNSS Position error comparison
