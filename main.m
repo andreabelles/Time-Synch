@@ -43,9 +43,11 @@ rmsePosSkog = sqrt(mean(errPosSkog.^2));
 rmseVelSkog = sqrt(mean(errVelSkog.^2));
 
 fprintf('\t\t ==== RMSE ==== \n');
-fprintf('\t\t\t IMU-only \t GNSS-only \t Standard EKF \t Skog EKF \n');
-fprintf('Position: \t %.4f \t %.4f \t %.4f \t\t %.4f \n', rmsePosIMU, rmsePosGNSS, rmsePosEKF, rmsePosSkog);
-fprintf('Velocity: \t %.4f \t \t\t \t %.4f \t\t %.4f \n', rmseVelIMU, rmseVelEKF, rmseVelSkog);
+fprintf('           IMU-only    GNSS-only    Standard EKF    Skog EKF \n');
+fprintf('Position:  %.4f     %.4f       %.4f          %.4f \n', ...
+        rmsePosIMU, rmsePosGNSS, rmsePosEKF, rmsePosSkog);
+fprintf('Velocity:  %.4f                   %.4f          %.4f \n', ...
+        rmseVelIMU, rmseVelEKF, rmseVelSkog);
 
 %% Plots
 % True trajectory vs measurements
@@ -92,8 +94,8 @@ title('True velocity vs estimated');
 legend('True', 'EKF', 'Skog');
 
 figure;
-plot(tVec(Config.M:Config.M:end), biasAccEKF(Config.M:Config.M:end), 'b-'); hold on;
-plot(tVec(Config.M:Config.M:end), biasAccSkog(Config.M:Config.M:end), 'r-'); 
+plot(tVec, biasAccEKF, 'b-'); hold on;
+plot(tVec, biasAccSkog, 'r-'); 
 xlabel('Time (s)'); ylabel('Bias (m/s^2)')
 title('Accelerometer bias estimation');
 legend('EKF', 'Skog');
@@ -163,4 +165,5 @@ title('IMU-only Velocity error');
 % xlabel('Time (s)'); ylabel('Time Delay (s)')
 % legend('True', 'Estimation')
 % title('Time Delay Skog Estimation');
+
 

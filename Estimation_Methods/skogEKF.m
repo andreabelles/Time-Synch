@@ -1,5 +1,5 @@
 function [x, PHistoric, vSkog, pSkog, biasAccSkog, timeDelaySkog, measAccCorr] = ...
-skogEKF(vSkog, pSkog, biasAccSkog, timeDelaySkog, xOld, PHistoric, pGNSS, measAcc, measAccCorr, k, tspan, Config)
+skogEKF(xOld, PHistoric, pGNSS, k, measAcc, measAccCorr, pSkog, vSkog, biasAccSkog, timeDelaySkog, tspan, Config)
 % skogEKF:  This function estimates the position, velocity, bias and time delay based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided Inertial Navigation Systems.
 %           This algorithm has been modified to estimate a total-state instead of an error-state KF and also to 
@@ -60,10 +60,7 @@ if(~isnan(pGNSS)) % If GNSS position is available
     
     %% Find xEst and PEst before k-Td
     % Determine index of IMU sample right before k-Td in time vector tspan
-    [~, closestIndex] = min(abs(timeAtDelay - tspan)); % Index of tspan closest to delay
-    % Condition to keep always the previous sample to k-Td
-    if tspan(closestIndex) > timeAtDelay, prevIndex = closestIndex - 1;
-    else, prevIndex = closestIndex; end
+    prevIndex = findPrevIndex(tspan, timeAtDelay);
     
     % Select the state vector and covariance matrix at instant previous to k-Td
     pSkogPrevDelay = pSkog(prevIndex);
@@ -150,7 +147,7 @@ if(~isnan(pGNSS)) % If GNSS position is available
     % LS: Simon 2006, eq. (7.149)
     % xConstrainedAtDelay = xPredAtDelay - A'*pinv(A*A')*(A*xUpdatedAtDelay - timeDelaySkog(k));
     % MP: Simon 2006, eq. (7.150)
-    % xConstrainedAtDelay = xUpdatedAtDelay - PUpdatedAtDelay*A'*pinv(A*PUpdatedAtDelay*A')*(A*xUpdatedAtDelay - timeDelaySkog(k));
+    % xConstrainedAtDelay = xUpdatedAtDelay - PUpdatedAtDelay*A'*pinv(A*PUpdatedAtDelay*A')*(A*xUpdatedAtDelay-timeDelaySkog(k));
     
     % Ansara, Molaei, et al., 2017
 %     C = [0 0 0 1];
