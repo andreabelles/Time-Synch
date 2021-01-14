@@ -54,7 +54,7 @@ PSkog(:,:,1) = [Config.sigmaInitPos^2 0 0 0; ...
 
 for k = 2:1:nPts
     % IMU measurements generation
-    measAcc(k) = Config.a0 + Config.biasAcc + normrnd(0,sqrt(Config.varMeasAcc));
+    measAcc(k) = Config.a0 + Config.biasMeasAcc + normrnd(0,sqrt(Config.varMeasAcc));
     % GNSS measurements generation
     if mod(k,Config.M) == 0 && (k - Config.tDelay/Config.tIMU)>0
         pGNSS(k) = p(k - Config.tDelay/Config.tIMU) + normrnd(0,sqrt(Config.varMeasPosGNSS));

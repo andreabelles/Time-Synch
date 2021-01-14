@@ -7,7 +7,8 @@ fGNSS:          1       # Hz        GNSS rate
 tDelay:         0.1  # seconds   GNSS observations delay
 
 # IMU SENSORS MEASUREMENT NOISE:
-varMeasAcc:             0.1     # m^2/s^3   Variance of the accelerometer measurement
+varMeasAcc:     0.1     # m^2/s^2   Variance of the accelerometer measurement
+biasMeasAcc:        0.5    # m/s^2     Accelerometer bias
 # GNSS MEASUREMENT NOISE:
 varMeasPosGNSS:         100       # m^2      Variance of the GNSS position measurements
 
@@ -15,7 +16,7 @@ varMeasPosGNSS:         100       # m^2      Variance of the GNSS position measu
 a0:             0       # m/s^2     Initial acceleration
 v0:             1       # m/s       Initial velocity
 p0:             0       # m         Initial position
-biasAcc:        0    # m/s^2     Accelerometer bias
+
 # LOOSELY COOPLED INTEGRATION:
 # GNSS/INS INTEGRATION NAVIGATION SOLUTION VECTOR INITIALIZATION
 rp0:             0      # m         Initial position

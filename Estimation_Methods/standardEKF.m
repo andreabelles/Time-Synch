@@ -23,12 +23,17 @@ POld           = PHistoric(:, :, k-1);
 
 % Sensor error compensation: Get IMU measurements estimations from IMU
 % measurements
-measAccCorr(k) = measAcc(k) - biasAccEKF(k-1);
+% f_tilda = f_true + bias_f_true
+% delta_b_f = b_f_hat - b_f_true -> b_f_hat = b_f_true + delta_b_f
+% f_hat = f_tilda - bias_f_hat = (f_true + bias_f_true) - (b_f_true +
+% delta_b_f); if delta_b_f tends to 0, then: f_hat = f_true + bias_f_true -
+% b_f_true -> f_hat = f_true so the estimation tends to the true value
+measAccCorr(k) = measAcc(k) - biasAccEKF(k-1);  
 
 % Navigation equations computation: Update corrected inertial navigation solution
 vEKF(k) = vEKF(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * Config.tIMU;
 pEKF(k) = pEKF(k-1) + 0.5 * (vEKF(k) + vEKF(k-1)) * Config.tIMU;
-
+biasAccEKF(k) = biasAccEKF(k-1);
 % Initialization
 F = [0 1 0; 0 0 1; 0 0 0];
 Q = [0 0 0; 0 Config.varAccNoise 0; 0 0 Config.varAccBiasNoise];  
@@ -70,5 +75,5 @@ end
 % Output variables in the present
 pEKF(k) = pEKF(k) + x(1); % Position correction
 vEKF(k) = vEKF(k) + x(2); % Velocity correction
-biasAccEKF(k) = x(3); % Bias Acc estimation
+biasAccEKF(k) = biasAccEKF(k) - x(3); % Bias Acc correction
 end

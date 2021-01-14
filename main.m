@@ -98,6 +98,13 @@ xlabel('Time (s)'); ylabel('Bias (m/s^2)')
 title('Accelerometer bias estimation');
 legend('EKF', 'Skog');
 
+figure;
+plot(tVec(Config.M:Config.M:end), xEKF(3,Config.M:Config.M:end), 'b-'); hold on;
+plot(tVec(Config.M:Config.M:end), xSkog(3,Config.M:Config.M:end), 'r-');
+xlabel('Time (s)'); ylabel('Error Bias (m/s^2)')
+title('Accelerometer bias error-state EKF');
+legend('EKF', 'Skog');
+
 % Position Estimation Error plot
 figure
 subplot(2,1,1)
@@ -150,10 +157,10 @@ title('IMU-only Velocity error');
 % xlabel('Time (s)'); ylabel('Bias std (m/s)');
 % title('Standard deviation of the bias estimation');
 
-figure;
-plot(tVec, Config.tDelay, 'k-', 'Linewidth', 1); hold on;
-plot(tVec, timeDelaySkog, 'r-', 'Linewidth', 1);
-xlabel('Time (s)'); ylabel('Time Delay (s)')
-legend('True', 'Estimation')
-title('Time Delay Skog Estimation');
+% figure;
+% plot(tVec, Config.tDelay, 'k-', 'Linewidth', 1); hold on;
+% plot(tVec, timeDelaySkog, 'r-', 'Linewidth', 1);
+% xlabel('Time (s)'); ylabel('Time Delay (s)')
+% legend('True', 'Estimation')
+% title('Time Delay Skog Estimation');
 

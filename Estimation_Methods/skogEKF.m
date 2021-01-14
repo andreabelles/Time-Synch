@@ -17,7 +17,12 @@ POld           = PHistoric(:, :, k-1);
 
 % Sensor error compensation: Get IMU measurements estimations from IMU
 % measurements
-measAccCorr(k) = measAcc(k) + biasAccSkog(k-1);
+% f_tilda = f_true + bias_f_true
+% delta_b_f = b_f_hat - b_f_true -> b_f_hat = b_f_true + delta_b_f
+% f_hat = f_tilda - bias_f_hat = (f_true + bias_f_true) - (b_f_true +
+% delta_b_f); if delta_b_f tends to 0, then: f_hat = f_true + bias_f_true -
+% b_f_true -> f_hat = f_true so the estimation tends to the true value
+measAccCorr(k) = measAcc(k) - biasAccSkog(k-1);
 
 % Navigation equations computation: Update corrected inertial navigation solution
 vSkog(k) = vSkog(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * Config.tIMU;
@@ -122,14 +127,14 @@ if(~isnan(pGNSS)) % If GNSS position is available
     
     % Constrained state estimation: Estimate projection
     % TODO 
-    % xConstrainedAtDelay = xUpdatedAtDelay;
+    xConstrainedAtDelay = xUpdatedAtDelay;
     % Quadratic programming
     % H = [2 0 0 0; 0 2 0 0; 0 0 2 0; 0 0 0 2];
 %     H = pinv(PUpdatedAtDelay);
 %     f = (2*xUpdatedAtDelay'*H)';
-     A = [0 0 0 -1; 0 0 0 1]; % Constraints: (1) -dTd <= Td equivalent to dT >= -Td
-% %                              %              (2) dTd <= tspan - Td            
-     b = [timeDelaySkog(k) tspan(k)-timeDelaySkog(k)];
+%      A = [0 0 0 -1; 0 0 0 1]; % Constraints: (1) -dTd <= Td equivalent to dT >= -Td
+% % %                              %              (2) dTd <= tspan - Td            
+%      b = [timeDelaySkog(k) tspan(k)-timeDelaySkog(k)];
 % %     % b = [1; 1];
 %     lb = [-100 -100 -100 -100];
 %     ub = [100 100 100 100];
@@ -138,9 +143,9 @@ if(~isnan(pGNSS)) % If GNSS position is available
     % Linear programming
     % [xErrConstrainedAtDelay,fval] = linprog(f,A,b,[],[],lb,ub);
     % [xErrConstrainedAtDelay,fval] = fmincon(@(x)0.5*(x(1)^2 + x(2)^2 + x(3)^2 + x(4)^2),xUpdatedAtDelay,A,b,[],[],lb,ub);
-    f = @(x) (x - xUpdatedAtDelay)'*pinv(PUpdatedAtDelay)*(x - xUpdatedAtDelay);
-    X0 = 0.1*ones(4,1);
-    [xConstrainedAtDelay,fval] = fmincon(f,X0,A,b,[],[],[],[]);
+%     f = @(x) (x - xUpdatedAtDelay)'*pinv(PUpdatedAtDelay)*(x - xUpdatedAtDelay);
+%     X0 = 0.1*ones(4,1);
+%     [xConstrainedAtDelay,fval] = fmincon(f,X0,A,b,[],[],[],[]);
     % xConstrainedAtDelay = xUpdatedAtDelay + xErrConstrainedAtDelay;
     % LS: Simon 2006, eq. (7.149)
     % xConstrainedAtDelay = xPredAtDelay - A'*pinv(A*A')*(A*xUpdatedAtDelay - timeDelaySkog(k));
@@ -179,7 +184,7 @@ end
 % Output variables in the present
 pSkog(k) = pSkog(k) + x(1); % Position correction
 vSkog(k) = vSkog(k) + x(2); % Velocity correction
-biasAccSkog(k) = x(3);  % Bias Acc estimation
+biasAccSkog(k) = biasAccSkog(k) - x(3);  % Bias Acc correction
 timeDelaySkog(k) = timeDelaySkog(k) + x(4); % Time Delay correction
 
 end
