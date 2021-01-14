@@ -8,25 +8,31 @@ tDelay:         0.1  # seconds   GNSS observations delay
 
 # IMU SENSORS MEASUREMENT NOISE:
 varMeasAcc:     0.1     # m^2/s^2   Variance of the accelerometer measurement
-biasMeasAcc:        0.5    # m/s^2     Accelerometer bias
+biasMeasAcc:        0.1    # m/s^2     Accelerometer bias
 # GNSS MEASUREMENT NOISE:
 varMeasPosGNSS:         100       # m^2      Variance of the GNSS position measurements
 
 # TRUE TRAJECTORY DEFINITION
 a0:             0       # m/s^2     Initial acceleration
 v0:             1       # m/s       Initial velocity
-p0:             0       # m         Initial position
+pNorth0:        0       # m         Initial North position
+pEast0:         0       # m         Initial East position
+psi0:           0.7854  # rad       Initial heading  
 
 # LOOSELY COOPLED INTEGRATION:
 # GNSS/INS INTEGRATION NAVIGATION SOLUTION VECTOR INITIALIZATION
-rp0:             0      # m         Initial position
+rpNorth0:        0       # m         Initial North position
+rpEast0:         0       # m         Initial East position
 rv0:             1      # m/s       Initial velocity 
+rpsi0:           0.7854  # rad       Initial heading
 rba0:            0      # m/s^2     Initial acceleration bias 
 rt0:             0      # s         Initial time delay 
 
 # COVARIANCE MATRIX INITIALIZATION
-sigmaInitPos:       0.5   # m         Initial STD of the position error
+sigmaInitNorthPos:  0.5     # m         Initial STD of the North position error
+sigmaInitEastPos:   0.5     # m         Initial STD of the East position error
 sigmaInitVel:       0.5   # m/s       Initial STD of the velocity error
+sigmaInitHeading:   0.5     # rad       Initial STD of the heading error
 sigmaInitAccBias:   0.5   # m/s^2     Initial STD of the accelerometer bias
 sigmaInitDelay:     0.2   # s         Initial STD of the time delay error
 # SYSTEM NOISE COVARIANCE MATRIX (Q)
