@@ -38,7 +38,7 @@ pEKF(k,1) = pEKF(k-1,1) + 0.5 * (vEKF(k) + vEKF(k-1))*cos(psiEKF(k)) * Config.tI
 pEKF(k,2) = pEKF(k-1,2) + 0.5 * (vEKF(k) + vEKF(k-1))*sin(psiEKF(k)) * Config.tIMU;
 biasAccEKF(k) = biasAccEKF(k-1);
 % Initialization
-F = [0 0 cos(psiEKF(k)) 0; 0 0 sin(psiEKF(k)) 0; 0 0 0 0; 0 0 0 0];
+F = [0 0 cos(psiEKF(k)) 0; 0 0 sin(psiEKF(k)) 0; 0 0 0 1; 0 0 0 0];
 Q = [0 0 0 0; 0 0 0 0; 0 0 Config.varAccNoise 0; 0 0 0 Config.varAccBiasNoise];  
 
 % Discrete transition model
