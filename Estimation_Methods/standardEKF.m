@@ -69,13 +69,6 @@ if (~isnan(pGNSS)) % If GNSS position is available
     x = x + K*dz;
     PUpdated = PPred - K*H*PPred;
     PHistoric(:,:,k) = PUpdated;
-    
-    %% CLOSED LOOP CORRECTION
-    % GNSS/INS Integration navigation solution at epoch
-    % Output variables in the present
-    pEKF(k) = pEKF(k) + x(1); % Position correction
-    vEKF(k) = vEKF(k) + x(2); % Velocity correction
-    biasAccEKF(k) = biasAccEKF(k) + x(3); % Bias Acc estimation
 end
 %% CLOSED LOOP CORRECTION
 % GNSS/INS Integration navigation solution at epoch

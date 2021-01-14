@@ -159,11 +159,11 @@ title('IMU-only Velocity error');
 % xlabel('Time (s)'); ylabel('Bias std (m/s)');
 % title('Standard deviation of the bias estimation');
 
-% figure;
-% plot(tVec, Config.tDelay, 'k-', 'Linewidth', 1); hold on;
-% plot(tVec, timeDelaySkog, 'r-', 'Linewidth', 1);
-% xlabel('Time (s)'); ylabel('Time Delay (s)')
-% legend('True', 'Estimation')
-% title('Time Delay Skog Estimation');
+figure;
+plot(tVec([1 end]), Config.tDelay*ones(1, 2), 'k-', 'Linewidth', 1); hold on;
+plot(tVec, timeDelaySkog, 'r-', 'Linewidth', 1);
+xlabel('Time (s)'); ylabel('Time Delay (s)')
+legend('True', 'Estimation')
+title('Time Delay Skog Estimation');
 
 
