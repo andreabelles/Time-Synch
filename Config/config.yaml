@@ -8,7 +8,7 @@ tDelay:         0.1  # seconds   GNSS observations delay
 
 # IMU SENSORS MEASUREMENT NOISE:
 varMeasAcc:     0.1     # m^2/s^2   Variance of the accelerometer measurement
-biasMeasAcc:        0.5    # m/s^2     Accelerometer bias
+biasMeasAcc:    0.5    # m/s^2     Accelerometer bias
 # GNSS MEASUREMENT NOISE:
 varMeasPosGNSS:         100       # m^2      Variance of the GNSS position measurements
 
@@ -22,13 +22,13 @@ p0:             0       # m         Initial position
 rp0:             0      # m         Initial position
 rv0:             1      # m/s       Initial velocity 
 rba0:            0      # m/s^2     Initial acceleration bias 
-rt0:             0      # s         Initial time delay 
+rt0:             0.1      # s         Initial time delay 
 
 # COVARIANCE MATRIX INITIALIZATION
 sigmaInitPos:       0.5   # m         Initial STD of the position error
 sigmaInitVel:       0.5   # m/s       Initial STD of the velocity error
 sigmaInitAccBias:   0.5   # m/s^2     Initial STD of the accelerometer bias
-sigmaInitDelay:     0.001   # s         Initial STD of the time delay error
+sigmaInitDelay:     0.01   # s         Initial STD of the time delay error
 # SYSTEM NOISE COVARIANCE MATRIX (Q)
 varAccNoise:            0.01     # m^2/s^3   Variance of the accelerometer process noise
 varAccBiasNoise:        1e-4     # m^2/s^5   Variance of the accelerometer bias process noise
