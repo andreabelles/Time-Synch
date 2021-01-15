@@ -1,5 +1,5 @@
-function [x, PHistoric, vSkog, pSkog, biasAccSkog, timeDelaySkog, measAccCorr] = ...
-skogEKF(xOld, PHistoric, pGNSS, k, measAcc, measAccCorr, pSkog, vSkog, biasAccSkog, timeDelaySkog, tspan, Config)
+function [x, PHistoric, vSkog, pSkog, biasAccSkog, timeDelaySkog, biasGPSSkog, driftGPSSkog, measAccCorr] = ...
+skogEKF(xOld, PHistoric, pGNSS, k, measAcc, measAccCorr, pSkog, vSkog, biasAccSkog, timeDelaySkog, biasGPSSkog, driftGPSSkog, tspan, Config)
 % skogEKF:  This function estimates the position, velocity, bias and time delay based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided Inertial Navigation Systems.
 %           This algorithm has been modified to estimate a total-state instead of an error-state KF and also to 
@@ -29,20 +29,27 @@ vSkog(k) = vSkog(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * Config.tIMU;
 pSkog(k) = pSkog(k-1) + 0.5 * (vSkog(k) + vSkog(k-1)) * Config.tIMU;
 biasAccSkog(k) = biasAccSkog(k-1);
 timeDelaySkog(k) = timeDelaySkog(k-1);
+biasGPSSkog(k) = biasGPSSkog(k-1);
+driftGPSSkog(k) = driftGPSSkog(k-1);
 
 % Initialization
-F = [0 1 0 0; 0 0 1 0; 0 0 0 0; 0 0 0 0];
-Q = [0 0 0 0; ... 
-     0 Config.varAccNoise 0 0; ...
-     0 0 Config.varAccBiasNoise 0; ...
-     0 0 0 Config.varDelayNoise];  
+F = [0 1 0 0 0; ...
+     0 0 1 0 0; ...
+     0 0 0 0 0; ...
+     0 0 0 0 1; ...
+     0 0 0 0 0];
+Q = [0 0 0 0 0; ... 
+     0 Config.varAccNoise 0 0 0; ...
+     0 0 Config.varAccBiasNoise 0 0; ...
+     0 0 0 Config.varBiasGPSNoise 0; ...
+     0 0 0 0 Config.varDriftGPSNoise];  
 
 % Discrete transition model
 Fk = eye(size(F)) + Config.tIMU*F;
 Qk = Config.tIMU*Q;
 
 % Initialize state to 0 for close loop
-xOld    = zeros(4,1);
+xOld    = zeros(size(F,1),1);
 
 % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1)
 x = Fk * xOld;
@@ -69,7 +76,7 @@ if(~isnan(pGNSS)) % If GNSS position is available
     biasAccSkogPrevDelay = biasAccSkog(prevIndex);
     timeDelayPrevDelay = timeDelaySkog(prevIndex);
     
-    xPrevDelay = zeros(4,1); % Error-state vector at sample previous delay: [dp dV BiasAcc dtimeDelay]
+    xPrevDelay = zeros(size(F,1),1); % Error-state vector at sample previous delay: [dp dV BiasAcc dtimeDelay]
     PPrevDelay = PHistoric(:,:, prevIndex);
     
     %% Predict rIMU from one sample before k-Td of the IMU to k-Td
@@ -96,7 +103,7 @@ if(~isnan(pGNSS)) % If GNSS position is available
     % Measurement model
     z = pGNSS - pSkogPredAtDelay; % Observation vector: GPS - prediction INS at epoch-Td
     
-    H = [1 0 0 0];%-vSkog(k)]; % Eq. (21)
+    H = [1 0 0 0 0];%-vSkog(k)]; % Eq. (21)
     R = Config.varPosGNSS; 
     
     % Kalman filter gain computation
@@ -139,7 +146,8 @@ pSkog(k) = pSkog(k) + x(1); % Position correction
 vSkog(k) = vSkog(k) + x(2); % Velocity correction
 biasAccSkog(k) = biasAccSkog(k) - x(3);  % Bias Acc correction
 timeDelaySkog(k) = timeDelaySkog(k) + x(4); % Time Delay correction
-
+biasGPSSkog(k) = biasGPSSkog(k) + x(4); % Time Delay correction
+driftGPSSkog(k) = driftGPSSkog(k) + x(5);
 % if(~isnan(pGNSS)) %% TODO substitute by constraint
 %     timeDelaySkog(k)  = min(tspan(k), timeDelaySkog(k));
 %     timeDelaySkog(k)  = max(0, timeDelaySkog(k));

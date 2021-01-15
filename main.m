@@ -10,7 +10,7 @@ rng(1);
 [tspan, p, v, a] = generateTrajectory(Config);
 
 %% Generation of measurements and EKF
-[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF, pSkog, vSkog, biasAccSkog, timeDelaySkog] = ...
+[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF, pSkog, vSkog, biasAccSkog, timeDelaySkog, biasGPSSkog, driftGPSSkog] = ...
                             simulateEstimations(p, tspan, Config);
 
 %% Results
