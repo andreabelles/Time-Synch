@@ -109,26 +109,6 @@ if(~isnan(pGNSS)) % If GNSS position is available
     xUpdatedAtDelay = xPredAtDelay + K*dz; % A posteriori error-state 
     PUpdatedAtDelay = PPredAtDelay - K*H*PPredAtDelay; % A posteriori covariance
     
-%     
-    % Linear programming
-    % [xErrConstrainedAtDelay,fval] = linprog(f,A,b,[],[],lb,ub);
-    % [xErrConstrainedAtDelay,fval] = fmincon(@(x)0.5*(x(1)^2 + x(2)^2 + x(3)^2 + x(4)^2),xUpdatedAtDelay,A,b,[],[],lb,ub);
-%     f = @(x) (x - xUpdatedAtDelay)'*pinv(PUpdatedAtDelay)*(x - xUpdatedAtDelay);
-%     X0 = 0.1*ones(4,1);
-%     [xConstrainedAtDelay,fval] = fmincon(f,X0,A,b,[],[],[],[]);
-    % xConstrainedAtDelay = xUpdatedAtDelay + xErrConstrainedAtDelay;
-    % LS: Simon 2006, eq. (7.149)
-    % xConstrainedAtDelay = xPredAtDelay - A'*pinv(A*A')*(A*xUpdatedAtDelay - timeDelaySkog(k));
-    % MP: Simon 2006, eq. (7.150)
-    % xConstrainedAtDelay = xUpdatedAtDelay - PUpdatedAtDelay*A'*pinv(A*PUpdatedAtDelay*A')*(A*xUpdatedAtDelay-timeDelaySkog(k));
-    
-    % Ansara, Molaei, et al., 2017
-%     C = [0 0 0 1];
-%     N = zeros(size(xPredAtDelay));
-%     N(:,4) = C';
-%     alpha = min(-C(4))
-%     B = alpha*(eye(size(xPredAtDelay)) - N*pinv((N'*N))*N;
-%     xConstrainedAtDelay = xPredAtDelay + B*K*dz; % Kp o K?
     %% CLOSED LOOP CORRECTION
     % GNSS/INS Integration navigation solution at time delay (epoch-Td)
     % Discrete-time state transition model
@@ -142,22 +122,8 @@ if(~isnan(pGNSS)) % If GNSS position is available
     PHistoric(:,:,k) = PUpdated;
     
     %% Constrained state estimation: Estimate projection
-    % TODO 
-%     xConstrainedAtDelay = xUpdatedAtDelay;
-    % Quadratic programming
-    H = [2 0 0 0; 0 2 0 0; 0 0 2 0; 0 0 0 2];
-%     H = 2*pinv(PUpdatedAtDelay); % 2 is to compensate 1/2 inside quadprog
-    f = (x'*H)';  % Linear term is 2*x'*H
-    A = [0 0 0 -1; 0 0 0 1];    % Constraints: (1) -dTd <= Td equivalent to dT >= -Td
-                                %              (2) dTd <= tspan - Td            
-    b = [timeDelaySkog(k); tspan(k)-timeDelaySkog(k)];
-    lb = [-100 -100 -100 -100];
-    ub = [100 100 100 100];
-    x0 = [x(1:3); 0];
-%     options = optimoptions('quadprog', 'Algorithm', 'active-set');
-    [xConstrained, ~] = quadprog(H, f, A, b, [], [], lb, ub, x0);%, options);
-    
-    x = xConstrained;
+    [x] = constrainState(x, tspan(k), timeDelaySkog(k));
+
     %% Output variables in the past
     % TODO: Implement in case we want to save and plot estimations in the
     % past (at delay)
