@@ -54,10 +54,10 @@ Fk       = eye(size(F)) + Config.tIMU*F; % Taylor expansion 1st order
 Qk       = Config.tIMU*Q;
 
 % Initialization
-x0         = zeros(7,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasAcc BiasGyro timeDelay]
+xOld         = zeros(7,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasAcc BiasGyro timeDelay]
 
 % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1)
-x = Fk * x0; % X_k|k-1 = F_k*X_k-1|k-1
+x = Fk * xOld; % X_k|k-1 = F_k*X_k-1|k-1
 % Covariance prediction
 PPred = Fk * POld * Fk' + Qk;
 PHistoric(:,:, k) = PPred; % Save in case no GNSS measurements

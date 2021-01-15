@@ -4,7 +4,7 @@
 tEnd:                   240     # seconds   End time of the simulation
 fIMU:                   100     # Hz        IMU and EKF rate
 fGNSS:                  1       # Hz        GNSS rate
-tDelay:                 0.1     # seconds   GNSS observations delay
+tDelay:                 0     # seconds   GNSS observations delay
 # IMU SENSORS MEASUREMENT NOISE:
 varMeasAcc:             0.01     # m^2/s^3   Variance of the accelerometer measurement
 biasMeasAcc:            0.1    # m/s^2     Accelerometer bias
