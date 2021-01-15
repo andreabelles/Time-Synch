@@ -31,7 +31,7 @@ biasAccSkog(k) = biasAccSkog(k-1);
 timeDelaySkog(k) = timeDelaySkog(k-1);
 
 % Initialization
-F = [0 1 0 0; 0 0 1 0; 0 0 0 0; 0 0 0 1];
+F = [0 1 0 0; 0 0 1 0; 0 0 0 0; 0 0 0 0];
 Q = [0 0 0 0; ... 
      0 Config.varAccNoise 0 0; ...
      0 0 Config.varAccBiasNoise 0; ...
@@ -42,7 +42,7 @@ Fk = eye(size(F)) + Config.tIMU*F;
 Qk = Config.tIMU*Q;
 
 % Initialize state to 0 for close loop
-xOld(1:end)  = 0; % xOld(1:2)  = 0;
+xOld    = zeros(4,1);
 
 % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1)
 x = Fk * xOld;
@@ -76,8 +76,8 @@ if(~isnan(pGNSS)) % If GNSS position is available
     timeToDelay = timeAtDelay - tspan(prevIndex); % Time from previous sample of k-Td until k-Td
     
     % Strapdown equations to obtain state vector prediction at time delay (k-Td) solution
-    vSkogPredAtDelay = vSkogPrevDelay + 0.5 * (measAccInt + measAccCorr(prevIndex)) * Config.tIMU;
-    pSkogPredAtDelay = pSkogPrevDelay + 0.5 * (vSkogPredAtDelay + vSkogPrevDelay) * Config.tIMU;
+    vSkogPredAtDelay = vSkogPrevDelay + 0.5 * (measAccInt + measAccCorr(prevIndex)) * timeToDelay;%Config.tIMU;
+    pSkogPredAtDelay = pSkogPrevDelay + 0.5 * (vSkogPredAtDelay + vSkogPrevDelay) * timeToDelay;%Config.tIMU;
     % Sensor error and Delay error updates
     biasAccSkogPredAtDelay = biasAccSkogPrevDelay;
     timeDelayPredAtDelay = timeDelayPrevDelay;
@@ -96,7 +96,7 @@ if(~isnan(pGNSS)) % If GNSS position is available
     % Measurement model
     z = pGNSS - pSkogPredAtDelay; % Observation vector: GPS - prediction INS at epoch-Td
     
-    H = [1 0 0 -vSkog(k)]; % Eq. (21)
+    H = [1 0 0 0];%-vSkog(k)]; % Eq. (21)
     R = Config.varPosGNSS; 
     
     % Kalman filter gain computation

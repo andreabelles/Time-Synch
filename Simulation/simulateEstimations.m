@@ -9,11 +9,13 @@ nPts    = length(tspan);
 measAcc = zeros(nPts,1);
 measAccCorrEKF = zeros(nPts,1);
 measAccCorrSkog = zeros(nPts,1);
+
 % IMU-Only Navigation Solution
 vIMU    = zeros(nPts,1);    
 vIMU(1) = Config.v0;
 pIMU    = zeros(nPts,1);    
 pIMU(1) = Config.p0;
+
 % GNSS-Only Navigation Solution
 pGNSS   = nan(nPts,1);
 
