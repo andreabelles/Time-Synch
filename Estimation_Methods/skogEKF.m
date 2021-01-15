@@ -129,8 +129,8 @@ if ~isnan(pGNSS) % If GNSS position is available
     % Measurement model
     z = pGNSS' - estPredAtDelay.pos'; % Observation vector: GPS - prediction INS at k-Td
     
-    H = [1 0 0 0 0 0 0;   ...
-         0 1 0 0 0 0 0]; % Eq. (21)
+    H = [1 0 0 0 0 0 -estSkog.vel(k) * cos(estSkog.heading(k));   ...
+         0 1 0 0 0 0 -estSkog.vel(k) * sin(estSkog.heading(k))]; % Eq. (21)
     R = diag([Config.varPosGNSS Config.varPosGNSS]);
     
     % Kalman filter gain computation

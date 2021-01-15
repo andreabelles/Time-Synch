@@ -1,10 +1,10 @@
 ## CONFIGURATION FILE
 
 # SIMULATION PARAMETERS
-tEnd:                   240     # seconds   End time of the simulation
+tEnd:                   250     # seconds   End time of the simulation
 fIMU:                   100     # Hz        IMU and EKF rate
 fGNSS:                  1       # Hz        GNSS rate
-tDelay:                 0     # seconds   GNSS observations delay
+tDelay:                 0.5     # seconds   GNSS observations delay
 # IMU SENSORS MEASUREMENT NOISE:
 varMeasAcc:             0.01     # m^2/s^3   Variance of the accelerometer measurement
 biasMeasAcc:            0.1    # m/s^2     Accelerometer bias
@@ -29,7 +29,7 @@ xv0:                    1       # m/s       Initial velocity error
 xheading0:              0.7854  # rad       Initial heading angle
 xba0:                   0       # m/s^2     Initial acceleration bias
 xbg0:                   0       # rad/s     Initial gyroscope bias
-xt0:                    0       # s         Initial time delay
+xt0:                    0.5       # s         Initial time delay
 # COVARIANCE MATRIX INITIALIZATION
 sigmaInitNorthPos:      0.5     # m         Initial STD of the North position error
 sigmaInitEastPos:       0.5     # m         Initial STD of the East position error
@@ -37,7 +37,7 @@ sigmaInitVel:           0.5       # m/s       Initial STD of the velocity error
 sigmaInitHeading:       0.2     # rad       Initial STD of the heading error
 sigmaInitAccBias:       0.2   # m/s^2     Initial STD of the acceleration bias
 sigmaInitGyroBias:      0.2   # rad/s     Initial STD of the gyroscope bias
-sigmaInitDelay:         0     # s         Initial STD of the time delay error
+sigmaInitDelay:         0.2     # s         Initial STD of the time delay error
 # SYSTEM NOISE COVARIANCE MATRIX (Q)
 varAccNoise:            0.01    # m^2/s^3   Variance of the accelerometer
 varAccBiasNoise:        1e-8   # m^2/s^5   Variance of the accelerometer bias

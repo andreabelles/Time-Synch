@@ -32,7 +32,7 @@ errHeadingEKF   = trueTrajectory(:, 5) - estEKF.heading;
 % Skog EKF errors
 errPosSkog  = trueTrajectory(:, 1:2) - estSkog.pos;    % errPosEKF: [errorNorth, errorEast]
 errVelSkog  = trueTrajectory(:, 3) - estSkog.vel;
-errHeadingSkog   = trueTrajectory(:, 3) - estSkog.heading;
+errHeadingSkog   = trueTrajectory(:, 5) - estSkog.heading;
 
 % Eucliedean errors
 errEucliIMU = sqrt( errPosIMU(:, 1).^2 + errPosIMU(:, 2).^2 );
@@ -62,6 +62,21 @@ sigmaErrEucliSkog = sqrt( sigmaErrPosSkog(:, 1).^2 + sigmaErrPosSkog(:, 2).^2);
 % Euclidean distance of estimation
 eucliEKF = sqrt(estEKF.pos(:, 1).^2 + estEKF.pos(:, 2).^2);
 eucliSkog = sqrt(estSkog.pos(:, 1).^2 + estSkog.pos(:, 2).^2);
+
+rmsePosIMU = sqrt(mean(errEucliIMU.^2));
+rmseVelIMU = sqrt(mean(errVelIMU.^2));
+rmsePosGNSS = sqrt(nanmean(errEucliGNSS.^2));
+rmsePosEKF = sqrt(mean(errEucliEKF.^2));
+rmseVelEKF = sqrt(mean(errVelEKF.^2));
+rmsePosSkog = sqrt(mean(errEucliSkog.^2));
+rmseVelSkog = sqrt(mean(errVelSkog.^2));
+
+fprintf('\t\t ==== RMSE ==== \n');
+fprintf('           IMU-only    GNSS-only    Standard EKF    Skog EKF \n');
+fprintf('Position:  %.4f     %.4f       %.4f          %.4f \n', ...
+        rmsePosIMU, rmsePosGNSS, rmsePosEKF, rmsePosSkog);
+fprintf('Velocity:  %.4f                   %.4f          %.4f \n', ...
+        rmseVelIMU, rmseVelEKF, rmseVelSkog);
 
 %% Plots
 
@@ -236,6 +251,13 @@ subplot(2,1,2)
 plot(tVec, errHeadingIMU, 'b-');
 xlabel('Time (s)'); ylabel('Heading error (deg)')
 title('IMU-only Heading error');
+
+figure;
+plot(tVec([1 end]), Config.tDelay*ones(1, 2), 'k-', 'Linewidth', 1); hold on;
+plot(tVec, estSkog.timeDelay, 'r-', 'Linewidth', 1);
+xlabel('Time (s)'); ylabel('Time Delay (s)')
+legend('True', 'Estimation')
+title('Time Delay Skog Estimation');
 
 % ------------------------------------------------------------------------
 % IMU & GNSS Position error comparison
