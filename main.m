@@ -4,7 +4,7 @@ addpath(genpath('./'));
 % (Description of the project here)
 
 Config = loadConfigFile();
-
+rng(1);
 %% Generation of true trajectory
 [tspan, trueTrajectory] = generateTrajectory(Config); % trueTrajectory: [posN, posE, vel, acc, heading, headingRate]
 
@@ -80,7 +80,7 @@ fprintf('Velocity:  %.4f                   %.4f          %.4f \n', ...
 
 %% Plots
 
-% True trajectory vs measurements
+% True trajectory vs measurements3
 % figure;
 % plot(trueTrajectory(:, 2), trueTrajectory(:, 1), '.k') 
 % xlabel('East (m)'); ylabel('North (m)')
@@ -122,13 +122,17 @@ legend('True', 'EKF', 'Skog');
 
 % Accelerometer Bias
 figure;
+subplot(3,1,1)
 plot(tVec(Config.M:Config.M:end), estEKF.biasAcc(Config.M:Config.M:end), 'b-'); hold on;
 plot(tVec(Config.M:Config.M:end), estSkog.biasAcc(Config.M:Config.M:end), 'r-'); 
 xlabel('Time (s)'); ylabel('Bias (m/s^2)')
 title('Accelerometer bias estimation');
 legend('EKF', 'Skog');
-
-figure;
+subplot(3,1,2)
+plot(abs(estEKF.biasAcc - estSkog.biasAcc));
+xlabel('Time (s)'); ylabel('Bias error (m)');
+title('Estimation error between Standard and Skog EKF');
+subplot(3,1,3)
 plot(tVec(Config.M:Config.M:end), xEKF(5,Config.M:Config.M:end), 'b-'); hold on;
 plot(tVec(Config.M:Config.M:end), xSkog(5,Config.M:Config.M:end), 'r-');
 xlabel('Time (s)'); ylabel('Error Bias (m/s^2)')
@@ -137,13 +141,17 @@ legend('EKF', 'Skog');
 
 % Gyroscope Bias
 figure;
+subplot(3,1,1)
 plot(tVec(Config.M:Config.M:end), estEKF.biasGyro(Config.M:Config.M:end), 'b-'); hold on;
 plot(tVec(Config.M:Config.M:end), estSkog.biasGyro(Config.M:Config.M:end), 'r-'); 
 xlabel('Time (s)'); ylabel('Bias (deg/s)')
 title('Gyroscope bias estimation');
 legend('EKF', 'Skog');
-
-figure;
+subplot(3,1,2)
+plot(abs(estEKF.biasGyro - estSkog.biasGyro));
+xlabel('Time (s)'); ylabel('Bias error (m)');
+title('Estimation error between Standard and Skog EKF');
+subplot(3,1,3)
 plot(tVec(Config.M:Config.M:end), xEKF(6,Config.M:Config.M:end), 'b-'); hold on;
 plot(tVec(Config.M:Config.M:end), xSkog(6,Config.M:Config.M:end), 'r-');
 xlabel('Time (s)'); ylabel('Error Bias (m/s^2)')
@@ -153,7 +161,7 @@ legend('EKF', 'Skog');
 
 % North Position Estimation Error plot
 figure
-subplot(2,1,1)
+subplot(3,1,1)
 p1 = plot(tVec, errPosEKF(:, 1), 'b-'); hold on;
 p2 = plot(tVec, errPosSkog(:, 1), 'r-');
 % yline(mean(errPosEKF), 'k');
@@ -161,11 +169,15 @@ p3 = plot(tVec, 3*sigmaErrPosEKF(:, 1), 'c-');
 p4 = plot(tVec, -3*sigmaErrPosEKF(:, 1), 'c-');
 p5 = plot(tVec, 3*sigmaErrPosSkog(:, 1), 'm-');
 p6 = plot(tVec, -3*sigmaErrPosSkog(:, 1), 'm-');
-xlabel('Time (s)'); ylabel('Position error (m)')
+xlabel('Time (s)'); ylabel('Position error (m)');
 title('Error in North position estimations');
 h = [p1 p2 p3 p5];
 legend(h,'EKF', 'Skog','3\sigma EKF', '3\sigma Skog');
-subplot(2,1,2)
+subplot(3,1,2)
+plot(abs(estEKF.pos(:,1) - estSkog.pos(:,1)));
+xlabel('Time (s)'); ylabel('Position error (m)');
+title('Estimation error between Standard and Skog EKF');
+subplot(3,1,3)
 plot(tVec, errPosIMU(:, 1), 'b-'); hold on
 plot(tVec, errPosGNSS(:, 1), 'r.');
 xlabel('Time (s)'); ylabel('Position error (m)')
@@ -174,7 +186,7 @@ title('IMU-only & GNSS-only North Position error');
 
 % East Position Estimation Error plot
 figure
-subplot(2,1,1)
+subplot(3,1,1)
 p1 = plot(tVec, errPosEKF(:, 2), 'b-'); hold on;
 p2 = plot(tVec, errPosSkog(:, 2), 'r-');
 % yline(mean(errPosEKF), 'k');
@@ -186,7 +198,11 @@ xlabel('Time (s)'); ylabel('Position error (m)')
 title('Error in East position estimations');
 h = [p1 p2 p3 p5];
 legend(h,'EKF', 'Skog','3\sigma EKF', '3\sigma Skog');
-subplot(2,1,2)
+subplot(3,1,2)
+plot(abs(estEKF.pos(:,2) - estSkog.pos(:,2)));
+xlabel('Time (s)'); ylabel('Position error (m)');
+title('Estimation error between Standard and Skog EKF');
+subplot(3,1,3)
 plot(tVec, errPosIMU(:, 2), 'b-'); hold on
 plot(tVec, errPosGNSS(:, 2), 'r.');
 xlabel('Time (s)'); ylabel('Position error (m)')
@@ -216,7 +232,7 @@ title('IMU-only & GNSS-only Euclidean Position error');
 
 % Velocity Estimation Error plot
 figure
-subplot(2,1,1)
+subplot(3,1,1)
 p1 = plot(tVec, errVelEKF, 'b-'); hold on;
 p2 = plot(tVec, errVelSkog, 'r-');
 % yline(mean(errVelEKF), 'k');
@@ -228,14 +244,18 @@ xlabel('Time (s)'); ylabel('Velocity error (m)')
 title('Error in velocity estimations');
 h = [p1 p2 p3 p5];
 legend(h,'EKF', 'Skog','3\sigma EKF', '3\sigma Skog');
-subplot(2,1,2)
+subplot(3,1,2)
+plot(abs(estEKF.vel - estSkog.vel));
+xlabel('Time (s)'); ylabel('Velocity error (m)');
+title('Estimation error between Standard and Skog EKF');
+subplot(3,1,3)
 plot(tVec, errVelIMU, 'b-');
 xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 title('IMU-only Velocity error');
 
 % Heading Estimation Error plot
 figure
-subplot(2,1,1)
+subplot(3,1,1)
 p1 = plot(tVec, errHeadingEKF, 'b-'); hold on;
 p2 = plot(tVec, errHeadingSkog, 'r-');
 % yline(mean(errVelEKF), 'k');
@@ -247,7 +267,11 @@ xlabel('Time (s)'); ylabel('Heading error (deg)')
 title('Error in heading estimations');
 h = [p1 p2 p3 p5];
 legend(h,'EKF', 'Skog','3\sigma EKF', '3\sigma Skog');
-subplot(2,1,2)
+subplot(3,1,2)
+plot(abs(estEKF.heading - estSkog.heading));
+xlabel('Time (s)'); ylabel('Heading error (m)');
+title('Estimation error between Standard and Skog EKF');
+subplot(3,1,3)
 plot(tVec, errHeadingIMU, 'b-');
 xlabel('Time (s)'); ylabel('Heading error (deg)')
 title('IMU-only Heading error');
@@ -258,6 +282,14 @@ plot(tVec, estSkog.timeDelay, 'r-', 'Linewidth', 1);
 xlabel('Time (s)'); ylabel('Time Delay (s)')
 legend('True', 'Estimation')
 title('Time Delay Skog Estimation');
+
+% Estimation errors between Standard EKF and Skog EKF
+figure; 
+plot(estEKF.acc - estSkog.acc); hold on;
+plot(estEKF.headingRate - estSkog.headingRate);
+legend('Acc', 'Heading rate');
+xlabel('Time (s)'); ylabel('Error')
+title('Estimation errors between Standard EKF and Skog EKF');
 
 % ------------------------------------------------------------------------
 % IMU & GNSS Position error comparison

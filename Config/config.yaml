@@ -25,8 +25,10 @@ heading0:               0.7854  # rad       Initial heading
 # GNSS/INS INTEGRATION NAVIGATION SOLUTION VECTOR INITIALIZATION
 xpNorth0:               0       # m         Initial North position
 xpEast0:                0       # m         Initial East position
-xv0:                    1       # m/s       Initial velocity error 
-xheading0:              0.7854  # rad       Initial heading angle
+xv0:                    1       # m/s       Initial velocity  
+xa0:                    0       # m/s^2     Initial acceleration
+xheading0:              0.7854  # rad       Initial heading angle 
+xheadingRate0:          0       # rad/s     Initial angular velocity
 xba0:                   0       # m/s^2     Initial acceleration bias
 xbg0:                   0       # rad/s     Initial gyroscope bias
 xt0:                    0.5       # s         Initial time delay
@@ -34,7 +36,7 @@ xt0:                    0.5       # s         Initial time delay
 sigmaInitNorthPos:      0.5     # m         Initial STD of the North position error
 sigmaInitEastPos:       0.5     # m         Initial STD of the East position error
 sigmaInitVel:           0.5       # m/s       Initial STD of the velocity error
-sigmaInitHeading:       0.2     # rad       Initial STD of the heading error
+sigmaInitHeading:       0.5     # rad       Initial STD of the heading error
 sigmaInitAccBias:       0.2   # m/s^2     Initial STD of the acceleration bias
 sigmaInitGyroBias:      0.2   # rad/s     Initial STD of the gyroscope bias
 sigmaInitDelay:         0.2     # s         Initial STD of the time delay error

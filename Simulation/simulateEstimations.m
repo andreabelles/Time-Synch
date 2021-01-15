@@ -34,12 +34,17 @@ estEKF.pos               = zeros(nPts,2);
 estEKF.pos(1, :)         = [Config.xpNorth0 Config.xpEast0];
 estEKF.vel               = zeros(nPts,1);    
 estEKF.vel(1)            = Config.xv0;
+estEKF.acc               = zeros(nPts,1);
+estEKF.acc(1)            = Config.xa0;
 estEKF.heading           = zeros(nPts,1);    
 estEKF.heading(1)        = Config.xheading0;
+estEKF.headingRate       = zeros(nPts,1);
+estEKF.headingRate(1)    = Config.xheadingRate0;
 estEKF.biasAcc           = zeros(nPts,1);    
 estEKF.biasAcc(1)        = Config.xba0;
 estEKF.biasGyro           = zeros(nPts,1);    
 estEKF.biasGyro(1)        = Config.xbg0;
+
 % Error-State Vector
 xEKF        = zeros(6,nPts);
 % Covariance matrix
@@ -58,16 +63,19 @@ estSkog.pos               = zeros(nPts,2);
 estSkog.pos(1, :)         = [Config.xpNorth0 Config.xpEast0];
 estSkog.vel               = zeros(nPts,1);    
 estSkog.vel(1)            = Config.xv0;
+estSkog.acc               = zeros(nPts,1);
+estSkog.acc(1)            = Config.xa0;
 estSkog.heading           = zeros(nPts,1);    
 estSkog.heading(1)        = Config.xheading0;
+estSkog.headingRate       = zeros(nPts,1);
+estSkog.headingRate(1)    = Config.xheadingRate0;
 estSkog.biasAcc           = zeros(nPts,1);    
 estSkog.biasAcc(1)        = Config.xba0;
 estSkog.biasGyro          = zeros(nPts,1);    
 estSkog.biasGyro(1)       = Config.xbg0;
 estSkog.timeDelay         = zeros(nPts,1);    
 estSkog.timeDelay(1)      = Config.xt0;
-estSkog.acc               = zeros(nPts,1);
-estSkog.headingRate       = zeros(nPts,1);
+
 % Error-State Vector
 xSkog        = zeros(7,nPts);
 % Covariance matrix
@@ -94,8 +102,8 @@ PSkog(:,:,1) = diag([Config.sigmaInitNorthPos^2,...
 
 
 for k = 2:1:nPts
-    [measAcc(k), measGyro(k), pGNSS(k, :)] = generateMeasurements(pTrue, Config, k);
-%     load('test.mat');
+%     [measAcc(k), measGyro(k), pGNSS(k, :)] = generateMeasurements(pTrue, Config, k);
+    load('measWrongHeading.mat');
     
     % IMU Only: Navigation equations (Using raw measurements)
     
@@ -114,18 +122,18 @@ for k = 2:1:nPts
                                                         measGyroCorrEKF,...    
                                                         Config);
     
-    [xSkog(:,k), PSkog, estSkog, measAccCorrSkog, measGyroCorrSkog] =         ...
-                                                skogEKF(xSkog(:,k-1),  ...
-                                                        PSkog,       ...
-                                                        estSkog,     ...
-                                                        pGNSS(k,:),     ...
-                                                        k, ...
-                                                        measAcc,            ...
-                                                        measAccCorrSkog,    ...
-                                                        measGyro, ...
-                                                        measGyroCorrSkog,   ... 
-                                                        tspan,              ...
-                                                        Config);                                                
+%     [xSkog(:,k), PSkog, estSkog, measAccCorrSkog, measGyroCorrSkog] =         ...
+%                                                 skogEKF(xSkog(:,k-1),  ...
+%                                                         PSkog,       ...
+%                                                         estSkog,     ...
+%                                                         pGNSS(k,:),     ...
+%                                                         k, ...
+%                                                         measAcc,            ...
+%                                                         measAccCorrSkog,    ...
+%                                                         measGyro, ...
+%                                                         measGyroCorrSkog,   ... 
+%                                                         tspan,              ...
+%                                                         Config);                                                
 %     TODO: Lee and Johnson method
     
      
