@@ -2,7 +2,7 @@ function [measAcc, measGyro, pGNSS] = generateMeasurements(pTrue, Config, k)
 
 % IMU measurements generation
 measAcc = Config.a0 + Config.biasMeasAcc + normrnd(0,sqrt(Config.varMeasAcc));
-measGyro = Config.headingRate0 + normrnd(0,sqrt(Config.varMeasGyro));
+measGyro = Config.headingRate0 + Config.biasMeasGyro + normrnd(0,sqrt(Config.varMeasGyro));
 
 % GNSS measurements generation
 if mod(k,Config.M) == 0 && (k - Config.tDelay/Config.tIMU)>0
