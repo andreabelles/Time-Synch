@@ -14,7 +14,15 @@ function [x] = constrainState(x, tNow, tDelay)
 % %     options = optimoptions('quadprog', 'Algorithm', 'active-set');
 %     [x, ~] = quadprog(H, f, A, b, [], [], lb, ub, x0);%, options);
 
-x(4) = max(x(4), - tDelay);         % dTd >= -tDelay
-x(4) = min(x(4), tNow - tDelay);    % dTd <= tNow - tDelay
+x = max(x, - tDelay);         % dTd >= -tDelay
+x = min(x, tNow - tDelay);    % dTd <= tNow - tDelay
+
+% if x>= -tDelay && x<= (tNow - tDelay)
+%     % Do nothing
+% elseif x < -tDelay
+%     x = -tDelay;
+% elseif x > tNow - tDelay
+%     x = tNow-tDelay;
+% end
 
 end

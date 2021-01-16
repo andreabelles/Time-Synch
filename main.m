@@ -1,4 +1,4 @@
-clear; close all; clc;
+clear; %close all; clc;
 addpath(genpath('./'));
 % Time Synchronization GNSS-aided IMU project
 % (Description of the project here)

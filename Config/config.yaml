@@ -4,11 +4,11 @@
 tEnd:           240      # seconds   End time of the simulation
 fIMU:           100     # Hz        IMU and EKF rate
 fGNSS:          1       # Hz        GNSS rate
-tDelay:         0.1  # seconds   GNSS observations delay
+tDelay:         30  # seconds   GNSS observations delay
 
 # IMU SENSORS MEASUREMENT NOISE:
-varMeasAcc:     0.01     # m^2/s^2   Variance of the accelerometer measurement
-biasMeasAcc:    0.1    # m/s^2     Accelerometer bias
+varMeasAcc:     0.1     # m^2/s^2   Variance of the accelerometer measurement
+biasMeasAcc:    0    # m/s^2     Accelerometer bias
 # GNSS MEASUREMENT NOISE:
 varMeasPosGNSS:         100       # m^2      Variance of the GNSS position measurements
 
@@ -22,16 +22,16 @@ p0:             0       # m         Initial position
 rp0:             0      # m         Initial position
 rv0:             1      # m/s       Initial velocity 
 rba0:            0      # m/s^2     Initial acceleration bias 
-rt0:             0.2      # s         Initial time delay 
+rt0:             30     # s         Initial time delay 
 
 # COVARIANCE MATRIX INITIALIZATION
-sigmaInitPos:       0.5   # m         Initial STD of the position error
-sigmaInitVel:       0.5   # m/s       Initial STD of the velocity error
+sigmaInitPos:       0.2   # m         Initial STD of the position error
+sigmaInitVel:       0.2   # m/s       Initial STD of the velocity error
 sigmaInitAccBias:   0.2   # m/s^2     Initial STD of the accelerometer bias
-sigmaInitDelay:     0.2   # s         Initial STD of the time delay error
+sigmaInitDelay:     0  # s         Initial STD of the time delay error
 # SYSTEM NOISE COVARIANCE MATRIX (Q)
-varAccNoise:            0.01     # m^2/s^3   Variance of the accelerometer process noise
+varAccNoise:            0.0001     # m^2/s^3   Variance of the accelerometer process noise
 varAccBiasNoise:        1e-8     # m^2/s^5   Variance of the accelerometer bias process noise
-varDelayNoise:          1e-8        # s^2         Variance of the delay process noise
+varDelayNoise:          0        # s^2         Variance of the delay process noise
 # MEASUREMENT NOISE COVARIANCE MATRIX (R)
 varPosGNSS:             100       # m^2      Variance of the GNSS measurement model (R)
