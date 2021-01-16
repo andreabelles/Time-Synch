@@ -4,7 +4,7 @@ addpath(genpath('./'));
 % (Description of the project here)
 
 Config = loadConfigFile();
-rng(1);
+% rng(1);
 
 %% Generation of true trajectory
 [tspan, p, v, a] = generateTrajectory(Config);

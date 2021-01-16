@@ -1,4 +1,4 @@
-function [x, PHistoric, vSkog, pSkog, biasAccSkog, timeDelaySkog, measAccCorr] = ...
+function [x, PHistoric, vSkog, pSkog, biasAccSkog, timeDelaySkog, measAccCorr, xMean] = ...
                skogEKFtest(xOld, PHistoric, pGNSS, k, measAcc, measAccCorr, pSkog, vSkog, biasAccSkog, timeDelaySkog, tspan, Config)
 % EKF:  This function estimates the position, velocity and bias based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
@@ -21,11 +21,11 @@ POld           = PHistoric(:, :, k-1);
 % b_f_true -> f_hat = f_true so the estimation tends to the true value
 
 if all(isnan(pGNSS)) % we need to wait tGNSS to find the first GNSS measurement available, otherwise we only have IMU
-  measAccCorr(k) = measAcc(k) - biasAccSkog(k-1);
+    measAccCorr(k) = measAcc(k) - biasAccSkog(k-1);
 else
-  timeAtDelay = tspan(k) - timeDelaySkog(k-1);
-  measAccInt = interp1(tspan(1:k), measAcc(1:k), timeAtDelay); % TODO: check constraint for Td
-  measAccCorr(k) = measAccInt - biasAccSkog(k-1);
+    timeAtDelay = tspan(k) - timeDelaySkog(k-1);
+    measAccInt = interp1(tspan(1:k), measAcc(1:k), timeAtDelay); % TODO: check constraint for Td
+    measAccCorr(k) = measAccInt - biasAccSkog(k-1);
 end
 % Navigation equations computation: Update corrected inertial navigation solution
 vSkog(k) = vSkog(k-1) + measAccCorr(k) * Config.tIMU;
@@ -83,5 +83,5 @@ vSkog(k) = vSkog(k) + x(2); % Velocity correction
 biasAccSkog(k) = biasAccSkog(k) - x(3); % Bias Acc correction
 timeDelaySkog(k) = timeDelaySkog(k) + x(4); % Time delay correction
 timeDelaySkog(k) = max(0, timeDelaySkog(k));% Time delay can't be negative
-
+timeDelaySkog(k) = min(tspan(k), timeDelaySkog(k));% Time delay can't larger than current time
 end
