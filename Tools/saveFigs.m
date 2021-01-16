@@ -1,4 +1,4 @@
-FolderName = '../Figures_auto/1D_StandardEKF/WithBias';   % Your destination folder
+FolderName = '../Figures_auto/1D_Skog';   % Your destination folder
 if ~exist(FolderName, 'dir')
        mkdir(FolderName)
 end
