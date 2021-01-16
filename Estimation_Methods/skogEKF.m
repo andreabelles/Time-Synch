@@ -54,7 +54,7 @@ PHistoric(:,:,k) = PPred; % Save in case no GNSS measurements
 if(~isnan(pGNSS)) % If GNSS position is available
     %% Interpolate accelerometer measurement from k to k-Td
     timeAtDelay = tspan(k) - timeDelaySkog(k);
-    timeAtDelay = max(0,timeAtDelay);
+   % timeAtDelay = max(0,timeAtDelay);
     % Extracted from Eq. (24) and reference paper [22]. 
     measAccInt = lagrangeInterp(tspan(1:k), measAccCorr(1:k), timeAtDelay); % TODO: check constraint for Td
 %     measAccInt = interp1(tspan(1:k), measAccCorr(1:k), timeAtDelay);
