@@ -27,6 +27,7 @@ else
     measAccInt = interp1(tspan(1:k), measAcc(1:k), timeAtDelay); % TODO: check constraint for Td
     measAccCorr(k) = measAccInt - biasAccSkog(k-1);
 end
+
 % Navigation equations computation: Update corrected inertial navigation solution
 vSkog(k) = vSkog(k-1) + measAccCorr(k) * Config.tIMU;
 pSkog(k) = pSkog(k-1) + vSkog(k) * Config.tIMU;
@@ -68,10 +69,10 @@ if (~isnan(pGNSS(k))) % If GNSS position is available
     K = (PPred*H')/(H*PPred*H' + R); % From Table 1
     
     % Innovation vector computation 
-    dz = z - H * x; % Eq. (20)
+    dz = z - H * x;% + (0.5 * measAccCorr(k) * PPred(4,4)^2);%1.15; % Eq. (20)
     
     % Update state vector and covariance matrix
-    x = x + K*dz;
+    x = x + K*dz; 
     PUpdated = PPred - K*H*PPred;
     PHistoric(:,:,k) = PUpdated;
 end
@@ -83,5 +84,7 @@ vSkog(k) = vSkog(k) + x(2); % Velocity correction
 biasAccSkog(k) = biasAccSkog(k) - x(3); % Bias Acc correction
 timeDelaySkog(k) = timeDelaySkog(k) + x(4); % Time delay correction
 timeDelaySkog(k) = max(0, timeDelaySkog(k));% Time delay can't be negative
-timeDelaySkog(k) = min(tspan(k), timeDelaySkog(k));% Time delay can't larger than current time
+if timeDelaySkog(k) > tspan(k)
+    timeDelaySkog(k) = 0;% Time delay can't be greater than the actual time
+end
 end
