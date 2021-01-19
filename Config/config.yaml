@@ -4,7 +4,7 @@
 tEnd:           960      # seconds   End time of the simulation
 fIMU:           100     # Hz        IMU and EKF rate
 fGNSS:          1       # Hz        GNSS rate
-tDelay:         3  # seconds   GNSS observations delay
+tDelay:         0.1  # seconds   GNSS observations delay
 
 # IMU SENSORS MEASUREMENT NOISE:
 varMeasAcc:     1e-8     # m^2/s^2   Variance of the accelerometer measurement
@@ -13,7 +13,8 @@ biasMeasAcc:    0    # m/s^2     Accelerometer bias
 varMeasPosGNSS: 0       # m^2      Variance of the GNSS position measurements
 
 # TRUE TRAJECTORY DEFINITION
-a0:             0       # m/s^2     Initial acceleration
+a0:             5       # m/s^2     Initial Acceleration/Acceleration amplitude
+aFreq:          0.01    # Hz        Frequency of the sinusoiidal variation of acceleration
 v0:             15      # m/s       Initial velocity
 p0:             0       # m         Initial position
 
@@ -22,7 +23,7 @@ p0:             0       # m         Initial position
 rp0:             0      # m         Initial position
 rv0:             0      # m/s       Initial velocity 
 rba0:            0      # m/s^2     Initial acceleration bias 
-rt0:             3      # s         Initial time delay 
+rt0:             0      # s         Initial time delay 
 
 # COVARIANCE MATRIX INITIALIZATION
 sigmaInitPos:       0.4   # m         Initial STD of the position error
