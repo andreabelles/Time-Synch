@@ -23,11 +23,11 @@ POld           = PHistoric(:, :, k-1);
 if all(isnan(pGNSS)) % we need to wait tGNSS to find the first GNSS measurement available, otherwise we only have IMU
     measAccCorr(k) = measAcc(k) - biasAccSkog(k-1);
 else
-    timeAtDelay = tspan(k) - timeDelaySkog(k-1);
-    measAccInt = interp1(tspan(1:k), measAcc(1:k), timeAtDelay); % TODO: check constraint for Td
-    measAccCorr(k) = measAccInt - biasAccSkog(k-1);
+  measAccIntTrue = measAcc(k - Config.tDelay/Config.tIMU);  
+  timeAtDelay = tspan(k) - timeDelaySkog(k-1);
+  measAccInt = interp1(tspan(1:k), measAcc(1:k), timeAtDelay); % TODO: check constraint for Td
+  measAccCorr(k) = measAccInt - biasAccSkog(k-1);
 end
-
 % Navigation equations computation: Update corrected inertial navigation solution
 vSkog(k) = vSkog(k-1) + measAccCorr(k) * Config.tIMU;
 pSkog(k) = pSkog(k-1) + vSkog(k) * Config.tIMU;
@@ -69,10 +69,11 @@ if (~isnan(pGNSS(k))) % If GNSS position is available
     K = (PPred*H')/(H*PPred*H' + R); % From Table 1
     
     % Innovation vector computation 
-    dz = z - H * x;% + (0.5 * measAccCorr(k) * PPred(4,4)^2);%1.15; % Eq. (20)
+    dz = z - H * x;% + 1.15;% + 25;%(0.5*measAccCorr(k)*PPred(4,4)^2);%1.15; % Eq. (20)
     
     % Update state vector and covariance matrix
-    x = x + K*dz; 
+    x = x + K*dz;% + 0.5 * measAccCorr(k) * timeDelaySkog(k)^2;
+    %x(4) = x(4) + %K(4)*(0.5*measAccCorr(k)*x(4)^2);
     PUpdated = PPred - K*H*PPred;
     PHistoric(:,:,k) = PUpdated;
 end
