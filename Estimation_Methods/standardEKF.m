@@ -1,5 +1,13 @@
-function [estInt, P, measAccCorr, measGyroCorr] = ...
-    standardEKF(estInt, epoch, POld, pGNSS, measAcc, measGyro, tIMU, Config)
+function [x, PHistoric, vEKF, pEKF, biasAccEKF, measAccCorr] = standardEKF(xOld, ...
+                                                                        PHistoric, ...
+                                                                        pGNSS, ...
+                                                                        k, ...
+                                                                        measAcc, ...
+                                                                        measAccCorr, ...
+                                                                        pEKF, ...
+                                                                        vEKF, ...
+                                                                        biasAccEKF, ...
+                                                                        Config)
 
 % EKF:  This function estimates the position, velocity and bias based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
@@ -10,67 +18,62 @@ function [estInt, P, measAccCorr, measGyroCorr] = ...
 %
 % Outputs:  delta x:      Error state vector estimation
 
-% Sensor error compensation: Get IMU measurements estimations from IMU measures
-measAccCorr = measAcc - estInt.biasAcc(epoch-1); 
-measGyroCorr = measGyro - estInt.biasGyro(epoch-1);
+% From all the previous covariance matrix, we select the previous one
+POld           = PHistoric(:, :, k-1); 
+
+% Sensor error compensation: Get IMU measurements estimations from IMU
+% measurements
+% f_tilda = f_true + bias_f_true
+% delta_b_f = b_f_hat - b_f_true -> b_f_hat = b_f_true + delta_b_f
+% f_hat = f_tilda - bias_f_hat = (f_true + bias_f_true) - (b_f_true +
+% delta_b_f); if delta_b_f tends to 0, then: f_hat = f_true + bias_f_true -
+% b_f_true -> f_hat = f_true so the estimation tends to the true value
+measAccCorr(k) = measAcc(k) - biasAccEKF(k-1);  
 
 % Navigation equations computation: Update corrected inertial navigation solution
-[estInt] = navigationEquations(measGyroCorr, measAccCorr, estInt, epoch, tIMU);
-
+vEKF(k) = vEKF(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * Config.tIMU;
+pEKF(k) = pEKF(k-1) + 0.5 * (vEKF(k) + vEKF(k-1)) * Config.tIMU;
+biasAccEKF(k) = biasAccEKF(k-1);
 % Initialization
-x         = zeros(6,1); % Error-state vector: [dpNorth dpEast dV dHeading BiasAcc BiasGyro]
-% z            = zeros(size(pGNSS)); % Innovation vector (= 0 if no GNSS measurements available)     
+F = [0 1 0; 0 0 1; 0 0 0];
+Q = [0 0 0; 0 Config.varAccNoise 0; 0 0 Config.varAccBiasNoise];  
 
-% Continuous-time state transition model
-F       = zeros(6);
-F(1, 3) = cosd(estInt.heading(epoch));                              % d PNorth / d vAT
-F(1, 4) = -estInt.vel(epoch)*sind(estInt.heading(epoch));       % d PNorth / d heading
-F(2, 3) = sind(estInt.heading(epoch));                              % d PEast / d vAT
-F(2, 4) = estInt.vel(epoch)*cosd(estInt.heading(epoch));        % d PEast / d heading
-F(3, 5) = 1;                                                            % d vAT / biasAcc
-F(4, 6) = 1;                                                            % d heading / biasGyro
- 
-Q       = zeros(6);
-Q(3, 3) = Config.varAccNoise;        % Along-Track Velocity
-Q(4, 4) = Config.varGyroNoise;       % Heading
-Q(5, 5) = Config.varAccBiasNoise;    % Accelerometer bias (error)
-Q(6, 6) = Config.varGyroBiasNoise;   % Gyroscope bias (error)
+% Discrete transition model
+Fk = eye(size(F)) + Config.tIMU*F;
+Qk = Config.tIMU*Q;
 
-% Discrete-time state transition model
-Fk       = eye(6) + tIMU*F; % Taylor expansion 1st order
-Qk       = tIMU*Q;
+% Initialize state to 0 for close loop
+xOld(1:end)  = 0; % xOld(1:2)  = 0;
 
 % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1)
-x = Fk * x; % X_k|k-1 = F_k*X_k-1|k-1
+x = Fk * xOld;
 % Covariance prediction
-P = Fk * POld * Fk' + Qk;
+PPred = Fk*POld*Fk' + Qk;
+PHistoric(:,:,k) = PPred; % Save in case no GNSS measurements
 
 if (~isnan(pGNSS)) % If GNSS position is available
     
     % Measurement model
-    z = pGNSS' - estInt.pos(epoch,:)'; % Observation vector: GPS - prediction INS 
+    z = pGNSS - pEKF(k);  % Observation vector: GPS - prediction INS  
     
-    H = [1 0 0 0 0 0;   ...
-         0 1 0 0 0 0];
-    R = diag([Config.varPosGNSS Config.varPosGNSS]);
+    H = [1 0 0]; % Eq. (21)
+    R = Config.varPosGNSS;
     
     % Kalman filter gain computation
-    K = (P*H')/(H*P*H' + R);
+    K = (PPred*H')/(H*PPred*H' + R); % From Table 1
     
     % Innovation vector computation 
-    dz =  z - H * x;
+    dz = z - H * x; % Eq. (20)
     
-    % Update state prediction (state estimation)
-    x = x + K*dz; % X_k|k = X_k|k-1 + Kdz 
-    P = P - K*H*P;
+    % Update state vector and covariance matrix
+    x = x + K*dz;
+    PUpdated = PPred - K*H*PPred;
+    PHistoric(:,:,k) = PUpdated;
 end
-
-% CLOSED-LOOP CORRECTION
-% GNSS/INS Integration navigation solution
-estInt.pos(epoch,:) = estInt.pos(epoch,:) + x(1:2)';
-estInt.vel(epoch) = estInt.vel(epoch) + x(3);
-estInt.heading(epoch) = estInt.heading(epoch) + x(4);
-estInt.biasAcc(epoch) = x(5); % Bias Acc estimation
-estInt.biasGyro(epoch) = x(6); % Bias Gyro estimation 
-
+%% CLOSED LOOP CORRECTION
+% GNSS/INS Integration navigation solution at epoch
+% Output variables in the present
+pEKF(k) = pEKF(k) + x(1); % Position correction
+vEKF(k) = vEKF(k) + x(2); % Velocity correction
+biasAccEKF(k) = biasAccEKF(k) - x(3); % Bias Acc correction
 end

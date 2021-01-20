@@ -30,6 +30,8 @@ end
 % Flip h so h(0) multiplies last y
 % h = flip(h);
 
+h(isinf(h)) = 0;
+
 %% Interpolation
 v = sum(dot(y(kWindow), h));
 

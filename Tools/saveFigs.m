@@ -1,4 +1,4 @@
-FolderName = '../Figures_auto/tgnss5s_td1s/';   % Your destination folder
+FolderName = '../Figures_auto/1D_Skog';   % Your destination folder
 if ~exist(FolderName, 'dir')
        mkdir(FolderName)
 end

@@ -4,33 +4,63 @@ addpath(genpath('./'));
 % (Description of the project here)
 
 Config = loadConfigFile();
+% rng(1);
 
 %% Generation of true trajectory
-[tspan, trueTrajectory] = generateTrajectory(Config); % trueTrajectory: [posN, posE, vel, acc, heading, headingRate]
+[tspan, p, v, a] = generateTrajectory(Config);
 
 %% Generation of measurements and EKF
-[estIMURaw, estIntEKF, pGNSS, PEKF, estIntSkog, PSkog] = simulateEstimations(trueTrajectory, tspan, Config);
+[pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF, pSkog, vSkog, biasAccSkog,...
+    timeDelaySkog, pSkogPresent, vSkogPresent, biasAccSkogPresent, timeDelaySkogPresent, PSkogPresent] = ...
+                            simulateEstimations(p, v, a, tspan, Config);
 
 %% Results
 tVec        = 0:Config.tIMU:Config.tEnd;
-% pIntEKF     = xEKF(1:2, :);
-% vIntEKF     = xEKF(3, :);
-% headIntEKF  = xEKF(4, :);
-% bAccIntEKF  = xEKF(5, :);
-% bGyrIntEKF  = xEKF(6, :);
-% pIntSkog    = xSkog(1:2, :);
-% vIntSkog    = xSkog(3, :);
-% headIntSkog = xSkog(4, :);
-% bAccIntSkog = xSkog(5, :);
-% bGyrIntSkog = xSkog(6, :);
 % Computation of errors
-errPosIMU   = trueTrajectory(:, 1:2) - estIMURaw.pos;        % errPosIMU: [errorNorth, errorEast]
-errVelIMU   = trueTrajectory(:, 3) - estIMURaw.vel;             
-errPosGNSS  = trueTrajectory(:, 1:2) - pGNSS;       % errPosGNSS: [errorNorth, errorEast]
-errPosEKF   = trueTrajectory(:, 1:2) - estIntEKF.pos;    % errPosEKF: [errorNorth, errorEast]
-errVelEKF   = trueTrajectory(:, 3) - estIntEKF.vel;
-% errPosSkog  = trueTrajectory(:, 1:2) - pIntSkog';   % errPosSkog: [errorNorth, errorEast]
-% errVelSkog  = trueTrajectory(:, 3) - vIntSkog';
+% IMU errors (INS)
+errPosIMU   = p - pIMU;
+errVelIMU   = v - vIMU;
+% GNSS errors
+errPosGNSS  = p - pGNSS;
+% Standard EKF errors
+errPosEKF   = p - pEKF;
+errVelEKF   = v - vEKF;
+% Skog EKF errors
+errPosSkog   = p - pSkog;
+errVelSkog   = v - vSkog;
+errDelaySkog = Config.tDelay - timeDelaySkog;
+% Skog EKF at present errors
+errPosSkogPresent   = p - pSkogPresent;
+errVelSkogPresent   = v - vSkogPresent;
+errDelaySkogPresent = Config.tDelay - timeDelaySkogPresent;
+
+% STD of Standard EKF estimations
+sigmaPosEKF    = sqrt(permute(PEKF(1,1,:), [3 1 2]));
+sigmaVelEKF    = sqrt(permute(PEKF(2,2,:), [3 1 2]));
+% STD of Skog EKF estimations
+sigmaPosSkog    = sqrt(permute(PSkog(1,1,:), [3 1 2]));
+sigmaVelSkog    = sqrt(permute(PSkog(2,2,:), [3 1 2]));
+% STD of Skog EKF to present estimations
+sigmaPosSkogPresent    = sqrt(permute(PSkogPresent(1,1,:), [3 1 2]));
+sigmaVelSkogPresent    = sqrt(permute(PSkogPresent(2,2,:), [3 1 2]));
+
+rmsePosIMU = sqrt(mean(errPosIMU.^2));
+rmseVelIMU = sqrt(mean(errVelIMU.^2));
+rmsePosGNSS = sqrt(nanmean(errPosGNSS.^2));
+rmsePosEKF = sqrt(mean(errPosEKF.^2));
+rmseVelEKF = sqrt(mean(errVelEKF.^2));
+rmsePosSkog = sqrt(mean(errPosSkog.^2));
+rmseVelSkog = sqrt(mean(errVelSkog.^2));
+rmsePosSkogPresent = sqrt(mean(errPosSkogPresent.^2));
+rmseVelSkogPresent = sqrt(mean(errVelSkogPresent.^2));
+
+
+fprintf('\t\t ==== RMSE ==== \n');
+fprintf('           IMU-only    GNSS-only    Standard EKF    Skog EKF    Skog EKF at present \n');
+fprintf('Position:  %.4f     %.4f       %.4f          %.4f          %.4f \n', ...
+        rmsePosIMU, rmsePosGNSS, rmsePosEKF, rmsePosSkog, rmsePosSkogPresent);
+fprintf('Velocity:  %.4f                   %.4f          %.4f          %.4f \n', ...
+        rmseVelIMU, rmseVelEKF, rmseVelSkog, rmseVelSkogPresent);
 
 %% Plots
 
@@ -47,82 +77,108 @@ errVelEKF   = trueTrajectory(:, 3) - estIntEKF.vel;
 
 % True trajectory vs measurements
 figure;
-plot(trueTrajectory(:, 2), trueTrajectory(:, 1), '.k'); hold on;
-plot(estIMURaw.pos(:, 2), estIMURaw.pos(:, 1), 'b.'); 
-plot(pGNSS(:, 2), pGNSS(:, 1), 'r.');
-xlabel('East (m)'); ylabel('North (m)');
-title('True trajectory');
-legend('True', 'IMU', 'GNSS');
+plot(tVec, p, 'k-', 'Linewidth', 1.2); hold on;
+plot(tVec, pIMU, 'b-', 'Linewidth', 1.2); 
+plot(tVec, pGNSS, 'c.');
+plot(tVec, pEKF, 'g-', 'Linewidth', 1.2);
+plot(tVec, pSkog, 'r-', 'Linewidth', 1.2);
+plot(tVec, pSkogPresent, 'm-', 'Linewidth', 1.2);
+xlabel('Time (s)'); ylabel('Position (m)')
+title('True trajectory vs estimated');
+legend('True', 'IMU', 'GNSS', 'EKF', 'Skog', 'Skog present');
 
-% IMU & GNSS Position error comparison
-figure
-plot(tVec, errPosIMU(:, 1), 'b-'); hold on
-plot(tVec, errPosIMU(:, 2), 'g-');
-plot(tVec, errPosGNSS(:, 1), 'r.');
-plot(tVec, errPosGNSS(:, 2), 'm.');
-xlabel('Time (s)'); ylabel('Position error (m)')
-legend('IMU North', 'IMU East', 'GNSS North', 'GNSS East');
-title('IMU-only & GNSS-only Position error');
+% % IMU Position error plot
+% figure
+% plot(tVec, errPosIMU, 'b-'); hold on
+% plot(tVec, errPosGNSS, 'r.');
+% xlabel('Time (s)'); ylabel('Position error (m)')
+% legend('IMU', 'GNSS');
+% title('IMU-only & GNSS-only Position error');
 
-
-% % IMU Velocity error plot
+% IMU Velocity error plot
 % figure
 % plot(tVec, errVelIMU, 'b-'); hold on
 % xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 % title('IMU-only Velocity error');
 
-
 % True trajectory vs estimated trajectory
+% figure;
+% plot(tVec, p, 'k-', 'Linewidth', 1); hold on;
+% plot(tVec, pEKF, 'b-'); 
+% % plot(tVec, pIntSkog, 'r-'); 
+% xlabel('Time (s)'); ylabel('Position (m)')
+% title('True position vs estimated');
+% legend('True', 'EKF');
+
+% True Velocity vs estimated velocity
 figure;
-plot(trueTrajectory(:, 2), trueTrajectory(:, 1), '.k'); hold on;
-plot(estIntEKF.pos(:, 2), estIntEKF.pos(:, 1), 'r-'); 
-% plot(tVec, pIntSkog, 'r-'); 
-xlabel('East (m)'); ylabel('North (m)');
-title('True position vs estimations');
-legend('True', 'EKF', 'Skog');
+plot(tVec, v, 'k-', 'Linewidth', 1); hold on;
+plot(tVec, vEKF, 'b-');
+plot(tVec, vSkog, 'r-');
+plot(tVec, vSkogPresent, 'g-');
+xlabel('Time (s)'); ylabel('Velocity (m/s)')
+title('True velocity vs estimated');
+legend('True', 'EKF', 'Skog', 'Skog present');
 
-% EKF Position error
+figure;
+plot(tVec, biasAccEKF, 'b-'); hold on;
+plot(tVec, biasAccSkog, 'r-'); 
+xlabel('Time (s)'); ylabel('Bias (m/s^2)')
+title('Accelerometer bias estimation');
+legend('EKF', 'Skog');
+
+figure;
+plot(tVec(Config.M:Config.M:end), xEKF(3,Config.M:Config.M:end), 'b-'); hold on;
+plot(tVec(Config.M:Config.M:end), xSkog(3,Config.M:Config.M:end), 'r-');
+xlabel('Time (s)'); ylabel('Error Bias (m/s^2)')
+title('Accelerometer bias error-state EKF');
+legend('EKF', 'Skog');
+
+% Position Estimation Error plot
 figure
-plot(tVec, errPosEKF(:, 1), 'b-'); hold on
-plot(tVec, errPosEKF(:, 2), 'g-');
+subplot(2,1,1)
+p1 = plot(tVec, errPosEKF, 'b-'); hold on;
+p2 = plot(tVec, errPosSkog, 'r-');
+p21 = plot(tVec, errPosSkogPresent, 'g-');
+% yline(mean(errPosEKF), 'k');
+p3 = plot(tVec, 3*sigmaPosEKF, 'c-');
+p4 = plot(tVec, -3*sigmaPosEKF, 'c-');
+p5 = plot(tVec, 3*sigmaPosSkog, 'm-');
+p6 = plot(tVec, -3*sigmaPosSkog, 'm-');
+p7 = plot(tVec, 3*sigmaPosSkogPresent, 'Color', '#D95319');
+p8 = plot(tVec, -3*sigmaPosSkogPresent, 'Color', '#D95319');
 xlabel('Time (s)'); ylabel('Position error (m)')
-legend('Pos North', 'Pos East', 'GNSS North', 'GNSS East');
-title('EKF Position error');
+title('Error in position estimations');
+h = [p1 p2 p21 p3 p5 p7];
+legend(h,'EKF', 'Skog', 'Skog present','3\sigma EKF', '3\sigma Skog', '3\sigma SkogPresent');
+subplot(2,1,2)
+plot(tVec, errPosIMU, 'b-'); hold on;
+plot(tVec, errPosGNSS, 'm.');
+xlabel('Time (s)'); ylabel('Position error (m)')
+legend('IMU-only', 'GNSS-only')
+title('IMU-only and GNSS-only Position error');
 
-% % True Velocity vs estimated velocity
-% figure;
-% plot(tVec, v, 'k-', 'Linewidth', 1); hold on;
-% plot(tVec, vIntEKF, 'b-'); 
-% plot(tVec, vIntSkog, 'r-'); 
-% xlabel('Time (s)'); ylabel('Velocity (m/s)')
-% title('True velocity vs estimations');
-% legend('True', 'EKF', 'Skog');
-% 
-% figure;
-% plot(tVec, bAccIntEKF, 'b-'); hold on;
-% plot(tVec, bAccIntSkog, 'r-'); 
-% xlabel('Time (s)'); ylabel('Acceleration bias (m/s^2)')
-% title('Standard EKF method');
-% legend('EKF', 'Skog');
-% 
-% % Estimation Error plot
-% figure
-% plot(tVec, errPosEKF, 'b-'); hold on;
-% plot(tVec, errPosSkog, 'r-'); 
-% xlabel('Time (s)'); ylabel('Position error (m)')
-% title('Error in position estimations');
-% legend('EKF', 'Skog');
-% 
-% figure
-% plot(tVec, errVelEKF, 'b-'); hold on;
-% plot(tVec, errVelSkog, 'r-');
-% xlabel('Time (s)'); ylabel('Velocity error (m/s)')
-% title('Error in velocity estimations');
-% legend('EKF', 'Skog');
-
-
-
-% ------------------------------------------------------------------------
+% Velocity Estimation Error plot
+figure
+subplot(2,1,1)
+p1 = plot(tVec, errVelEKF, 'b-'); hold on;
+p2 = plot(tVec, errVelSkog, 'r-');
+p21 = plot(tVec, errVelSkogPresent, 'g-');
+% yline(mean(errVelEKF), 'k');
+p3 = plot(tVec, 3*sigmaVelEKF, 'c-');
+p4 = plot(tVec, -3*sigmaVelEKF, 'c-');
+p5 = plot(tVec, 3*sigmaVelSkog, 'm-');
+p6 = plot(tVec, -3*sigmaVelSkog, 'm-');
+p7 = plot(tVec, 3*sigmaVelSkogPresent, 'Color', '#D95319');
+p8 = plot(tVec, -3*sigmaVelSkogPresent, 'Color', '#D95319');
+xlabel('Time (s)'); ylabel('Velocity error (m)')
+title('Error in velocity estimations');
+h = [p1 p2 p21 p3 p5, p7];
+legend(h,'EKF', 'Skog', 'Skog present','3\sigma EKF', '3\sigma Skog', '3\sigma SkogPresent');
+subplot(2,1,2)
+plot(tVec, errVelIMU, 'b-');
+xlabel('Time (s)'); ylabel('Velocity error (m/s)')
+title('IMU-only Velocity error');
 
 % figure; plot(tVec./1e3, sqrt(permute(abs(PEKF(1, 1, :)), [3 1 2])));
 % xlabel('Time (s)'); ylabel('Position std (m/s)');
@@ -136,8 +192,23 @@ title('EKF Position error');
 % xlabel('Time (s)'); ylabel('Bias std (m/s)');
 % title('Standard deviation of the bias estimation');
 
-% figure;
-% plot(kVec./1e3, tDelay*ones(length(kVec)), 'k-', 'Linewidth', 1); hold on;
-% plot(kVec./1e3, xSkog(3,:), 'b.'); 
-% xlabel('Time (s)'); ylabel('Position (m)')
-% title('Time Delay Evolution');
+figure;
+subplot(2,1,1)
+plot(tVec([1 end]), Config.tDelay*ones(1, 2), 'k-', 'Linewidth', 1); hold on;
+plot(tVec, timeDelaySkog, 'r-', 'Linewidth', 1);
+xlabel('Time (s)'); ylabel('Time Delay (s)')
+legend('True', 'Estimation')
+title('Time Delay Skog Estimation');
+subplot(2,1,2)
+plot(tVec, errDelaySkog);
+xlabel('Time (s)'); ylabel('Delay error (s)');
+title('Time delay estimation error');
+
+
+
+% dbias = (a.*(Config.tDelay - timeDelaySkog).^2)/2;
+% figure; 
+% plot(tVec, dbias);
+% xlabel('Time (s)'); ylabel('Residual bias d_k (m)');
+% title('Bias due to second order term, eq. 23');
+
