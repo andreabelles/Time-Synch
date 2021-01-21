@@ -69,12 +69,8 @@ PSkogPresent(:,:,1) = [Config.sigmaInitPos^2 0 0 0; ...
                 0 0 0 Config.sigmaInitDelay^2];
 
 for k = 2:1:nPts
-    % IMU measurements generation
-    measAcc(k) = a(k) + Config.biasMeasAcc + normrnd(0,sqrt(Config.varMeasAcc));
-    % GNSS measurements generation
-    if mod(k,Config.M) == 0 && (k - Config.tDelay/Config.tIMU)>0
-        pGNSS(k) = p(k - Config.tDelay/Config.tIMU) + normrnd(0,sqrt(Config.varMeasPosGNSS));
-    end
+    % IMU and GNSS measurements generation
+    [measAcc(k), pGNSS(k)] = generateMeasurements(a, p, k, Config);
     % Strapdown equations
     vIMU(k) = vIMU(k-1) + measAcc(k)*Config.tIMU;
     pIMU(k) = pIMU(k-1) + vIMU(k)*Config.tIMU;
