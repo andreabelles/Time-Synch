@@ -31,9 +31,11 @@ POld           = PHistoric(:, :, k-1);
 measAccCorr(k) = measAcc(k) - biasAccEKF(k-1);  
 
 % Navigation equations computation: Update corrected inertial navigation solution
-vEKF(k) = vEKF(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * Config.tIMU;
-pEKF(k) = pEKF(k-1) + 0.5 * (vEKF(k) + vEKF(k-1)) * Config.tIMU;
-biasAccEKF(k) = biasAccEKF(k-1);
+[pEKF(k), vEKF(k), biasAccEKF(k)] = navigationEquations(pEKF(k-1), vEKF(k-1), measAccCorr(k), Config.tIMU, biasAccEKF(k-1));
+% vEKF(k) = vEKF(k-1) + 0.5 * (measAccCorr(k) + measAccCorr(k-1)) * Config.tIMU;
+% pEKF(k) = pEKF(k-1) + 0.5 * (vEKF(k) + vEKF(k-1)) * Config.tIMU;
+% biasAccEKF(k) = biasAccEKF(k-1);
+
 % Initialization
 F = [0 1 0; 0 0 1; 0 0 0];
 Q = [0 0 0; 0 Config.varAccNoise 0; 0 0 Config.varAccBiasNoise];  

@@ -1,10 +1,10 @@
 ## CONFIGURATION FILE
 
 # SIMULATION PARAMETERS
-tEnd:           900      # seconds   End time of the simulation
+tEnd:           900     # seconds   End time of the simulation
 fIMU:           100     # Hz        IMU and EKF rate
 fGNSS:          1       # Hz        GNSS rate
-tDelay:         0.5  # seconds   GNSS observations delay
+tDelay:         0.505     # seconds   GNSS observations delay
 
 # IMU SENSORS MEASUREMENT NOISE:
 varMeasAcc:     0.01     # m^2/s^2   Variance of the accelerometer measurement

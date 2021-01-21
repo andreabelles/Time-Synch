@@ -3,7 +3,6 @@ function [pIMU, vIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, vEKF, pEKF, biasAccEKF, p
                         simulateEstimations(p, v, a, tspan, Config)
 
 %% Initializations
-
 nPts    = length(tspan);
 
 % IMU Sensor Measurements
@@ -70,10 +69,9 @@ PSkogPresent(:,:,1) = [Config.sigmaInitPos^2 0 0 0; ...
 
 for k = 2:1:nPts
     % IMU and GNSS measurements generation
-    [measAcc(k), pGNSS(k)] = generateMeasurements(a, p, k, Config);
+    [measAcc(k), pGNSS(k)] = generateMeasurements(a, p, k, tspan, Config);
     % Strapdown equations
-    vIMU(k) = vIMU(k-1) + measAcc(k)*Config.tIMU;
-    pIMU(k) = pIMU(k-1) + vIMU(k)*Config.tIMU;
+    [pIMU(k), vIMU(k)] = navigationEquations(pIMU(k-1), vIMU(k-1), measAcc(k), Config.tIMU);
 
     %EKF
     [xEKF(:,k), PEKF, vEKF, pEKF, biasAccEKF, measAccCorrEKF] = ...

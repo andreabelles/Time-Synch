@@ -6,6 +6,8 @@ addpath(genpath('./'));
 Config = loadConfigFile();
 % rng(1);
 
+initColumns()
+
 %% Generation of true trajectory
 [tspan, p, v, a] = generateTrajectory(Config);
 
@@ -55,11 +57,11 @@ rmsePosSkogPresent = sqrt(mean(errPosSkogPresent.^2));
 rmseVelSkogPresent = sqrt(mean(errVelSkogPresent.^2));
 
 
-fprintf('\t\t ==== RMSE ==== \n');
-fprintf('           IMU-only    GNSS-only    Standard EKF    Skog EKF    Skog EKF at present \n');
-fprintf('Position:  %.4f     %.4f       %.4f          %.4f          %.4f \n', ...
+fprintf('\n\t\t\t\t\t ==== RMSE ==== \n');
+fprintf('\t\t IMU-only \t GNSS-only \t Standard EKF \t Skog EKF \t Skog EKF at present \n');
+fprintf('Position: \t %.4f \t %.4f \t %.4f \t %.4f \t %.4f \n', ...
         rmsePosIMU, rmsePosGNSS, rmsePosEKF, rmsePosSkog, rmsePosSkogPresent);
-fprintf('Velocity:  %.4f                   %.4f          %.4f          %.4f \n', ...
+fprintf('Velocity: \t %.4f \t N/A \t\t %.4f \t %.4f \t %.4f \n\n', ...
         rmseVelIMU, rmseVelEKF, rmseVelSkog, rmseVelSkogPresent);
 
 %% Plots

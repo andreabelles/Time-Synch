@@ -24,17 +24,19 @@ POld           = PHistoric(:, :, k-1);
 if all(isnan(pGNSS)) % we need to wait tGNSS to find the first GNSS measurement available, otherwise we only have IMU
     measAccCorr(k) = measAcc(k) - biasAccSkog(k-1);
 else
-    measAccIntTrue = measAcc(k - Config.tDelay/Config.tIMU);  
+%     measAccIntTrue = measAcc(k - Config.tDelay/Config.tIMU);  
     timeAtDelay = tspan(k) - timeDelaySkog(k-1);
     measAccInt = interp1(tspan(1:k), measAcc(1:k), timeAtDelay); % TODO: check constraint for Td
 %     measAccInt = measAcc(k);
     measAccCorr(k) = measAccInt - biasAccSkog(k-1);
 end
 % Navigation equations computation: Update corrected inertial navigation solution
-vSkog(k) = vSkog(k-1) + measAccCorr(k) * Config.tIMU;
-pSkog(k) = pSkog(k-1) + vSkog(k) * Config.tIMU;
-biasAccSkog(k) = biasAccSkog(k-1);
-timeDelaySkog(k) = timeDelaySkog(k-1);
+[pSkog(k), vSkog(k), biasAccSkog(k), timeDelaySkog(k)] = ...
+    navigationEquations(pSkog(k-1), vSkog(k-1), measAccCorr(k), Config.tIMU, biasAccSkog(k-1), timeDelaySkog(k-1));
+% vSkog(k) = vSkog(k-1) + measAccCorr(k) * Config.tIMU;
+% pSkog(k) = pSkog(k-1) + vSkog(k) * Config.tIMU;
+% biasAccSkog(k) = biasAccSkog(k-1);
+% timeDelaySkog(k) = timeDelaySkog(k-1);
 
 % Initialization
 F = [0 1 0 0; ...
@@ -92,11 +94,14 @@ if timeDelaySkog(k) > tspan(k)
 end
 
 % Navigation equations to move estimation to the present
-vSkogPresent(k) = vSkog(k) + measAcc(k) * timeDelaySkog(k);
-pSkogPresent(k) = pSkog(k) + vSkogPresent(k) * timeDelaySkog(k);
-biasAccSkogPresent(k) = biasAccSkog(k);
-timeDelaySkogPresent(k) = timeDelaySkog(k);
+[pSkogPresent(k), vSkogPresent(k), biasAccSkogPresent(k), timeDelaySkogPresent(k)] = ...
+    navigationEquations(pSkog(k), vSkog(k), measAcc(k), timeDelaySkog(k), biasAccSkog(k), timeDelaySkog(k));
+% vSkogPresent(k) = vSkog(k) + measAcc(k) * timeDelaySkog(k);
+% pSkogPresent(k) = pSkog(k) + vSkogPresent(k) * timeDelaySkog(k);
+% biasAccSkogPresent(k) = biasAccSkog(k);
+% timeDelaySkogPresent(k) = timeDelaySkog(k);
 
+% Prediction of covariance at present
 FkPresent = eye(size(F)) + timeDelaySkog(k)*F;
 QkPresent = timeDelaySkog(k)*Q;
 PPresent(:,:,k) = FkPresent*PHistoric(:,:,k)*FkPresent' + QkPresent;
