@@ -1,4 +1,4 @@
-function [measAcc, pGNSS] = generateMeasurements(a, p, k, tspan, Config)
+function [measAcc, pGNSS] = generateMeasurements(trueTrajectory, k, Config)
 %FUNCTION_NAME - One line description of what the function or script performs (H1 line)
 %Optional file header info (to give more details about the function than in the H1 line)
 %
@@ -25,17 +25,22 @@ function [measAcc, pGNSS] = generateMeasurements(a, p, k, tspan, Config)
 % Author: Andrea Belles Ferreres, Arnau Ochoa Bañuelos 
 %------------- BEGIN CODE --------------
 
+global COL_TRAJECTORY_TIME COL_TRAJECTORY_POS COL_TRAJECTORY_ACC
+
 %% IMU measurements generation
-measAcc = a(k) + Config.biasMeasAcc + normrnd(0,sqrt(Config.varMeasAcc));
+measAcc = trueTrajectory(k, COL_TRAJECTORY_ACC) + Config.biasMeasAcc + normrnd(0,sqrt(Config.varMeasAcc));
 
 %% GNSS measurements generation
 % If there is gnss measurement at time k
 if mod(k,Config.M) == 0 && (k - Config.tDelay/Config.tIMU)>0
     % If no true position at delay, interpolate
     if mod(Config.tDelay,Config.tIMU) == 0
-        pAtDelay = p(k - Config.tDelay/Config.tIMU);
+        kAtDelay = k - Config.tDelay/Config.tIMU;
+        pAtDelay = trueTrajectory(kAtDelay, COL_TRAJECTORY_POS);
     else
-        pAtDelay = interp1(tspan, p, tspan(k) - Config.tDelay);
+        pAtDelay = interp1( trueTrajectory(:, COL_TRAJECTORY_TIME), ...             % X axis
+                            trueTrajectory(:, COL_TRAJECTORY_POS), ...              % Y axis
+                            trueTrajectory(k, COL_TRAJECTORY_TIME) - Config.tDelay);% Time at delay
     end
     pGNSS = pAtDelay + normrnd(0,sqrt(Config.varMeasPosGNSS));
 else
