@@ -1,6 +1,12 @@
-function [x, PHistoric, vSkog, pSkog, biasAccSkog, timeDelaySkog, measAccCorr, vSkogPresent, pSkogPresent, biasAccSkogPresent, timeDelaySkogPresent, PPresent] = ...
-               skogEKF(xOld, PHistoric, pGNSS, k, measAcc, measAccCorr, pSkog, vSkog, biasAccSkog, timeDelaySkog, ...
-                            pSkogPresent, vSkogPresent, biasAccSkogPresent, timeDelaySkogPresent, PPresent, tspan, Config)
+function [xNew, PNew, estNew, measAccCorr, estPresent, PPresent] = ...
+                                            skogEKF(xOld,       ...
+                                                    POld,       ...
+                                                    estOld,     ...
+                                                    pGNSSHist,  ...
+                                                    measAccHist,...
+                                                    k,          ...
+                                                    tspan,      ...
+                                                    Config)
 % EKF:  This function estimates the position, velocity and bias based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
 %           Inertial Navigation Systems (see Table 1). 
@@ -10,8 +16,7 @@ function [x, PHistoric, vSkog, pSkog, biasAccSkog, timeDelaySkog, measAccCorr, v
 %
 % Outputs:  delta x:      Error state vector estimation
 
-% From all the previous covariance matrix, we select the previous one
-POld           = PHistoric(:, :, k-1); 
+global COL_EST_POS COL_EST_VEL COL_EST_ACCBIAS COL_EST_DELAY
 
 % Sensor error compensation: Get IMU measurements estimations from IMU
 % measurements
@@ -21,20 +26,15 @@ POld           = PHistoric(:, :, k-1);
 % delta_b_f); if delta_b_f tends to 0, then: f_hat = f_true + bias_f_true -
 % b_f_true -> f_hat = f_true so the estimation tends to the true value
 
-if all(isnan(pGNSS)) % we need to wait tGNSS to find the first GNSS measurement available, otherwise we only have IMU
-    measAccCorr(k) = measAcc(k) - biasAccSkog(k-1);
+if all(isnan(pGNSSHist)) % we need to wait tGNSS to find the first GNSS measurement available, otherwise we only have IMU
+    measAccCorr = measAccHist(k) - estOld(COL_EST_ACCBIAS);
 else
-    measAccIntTrue = measAcc(k - Config.tDelay/Config.tIMU);  
-    timeAtDelay = tspan(k) - timeDelaySkog(k-1);
-    measAccInt = interp1(tspan(1:k), measAcc(1:k), timeAtDelay); % TODO: check constraint for Td
-%     measAccInt = measAcc(k);
-    measAccCorr(k) = measAccInt - biasAccSkog(k-1);
+    timeAtDelay = tspan(k) - estOld(COL_EST_DELAY);
+    measAccInt = interp1(tspan(1:k), measAccHist(1:k), timeAtDelay);
+    measAccCorr = measAccInt - estOld(COL_EST_ACCBIAS);
 end
 % Navigation equations computation: Update corrected inertial navigation solution
-vSkog(k) = vSkog(k-1) + measAccCorr(k) * Config.tIMU;
-pSkog(k) = pSkog(k-1) + vSkog(k) * Config.tIMU;
-biasAccSkog(k) = biasAccSkog(k-1);
-timeDelaySkog(k) = timeDelaySkog(k-1);
+estPred = navigationEquations(estOld, measAccCorr, Config.tIMU);
 
 % Initialization
 F = [0 1 0 0; ...
@@ -51,54 +51,48 @@ Fk = eye(size(F)) + Config.tIMU*F;
 Qk = Config.tIMU*Q;
 
 % Initialize state to 0 for close loop
-xOld(1:end)  = 0; % xOld(1:2)  = 0;
+xOld(1:end)  = 0;
 
 % Time propagation (state prediction) - X_k|k-1 and cov(X_k|k-1)
-x = Fk * xOld;
+xNew = Fk * xOld;
 % Covariance prediction
-PPred = Fk*POld*Fk' + Qk;
-PHistoric(:,:,k) = PPred; % Save in case no GNSS measurements
+PNew = Fk*POld*Fk' + Qk; % Save in case no GNSS measurements
 
-if (~isnan(pGNSS(k))) % If GNSS position is available
+if (~isnan(pGNSSHist(k))) % If GNSS position is available
     
     % Measurement model
-    z = pGNSS(k) - pSkog(k);  % Observation vector: GPS - prediction INS  
+    z = pGNSSHist(k) - estPred(COL_EST_POS);  % Observation vector: GPS - prediction INS  
     
-    H = [1 0 0 -vSkog(k)]; % Eq. (21)
+    H = [1 0 0 -estPred(COL_EST_VEL)]; % Eq. (21)
     R = Config.varPosGNSS;
     
     % Kalman filter gain computation
-    K = (PPred*H')/(H*PPred*H' + R); % From Table 1
+    K = (PNew*H')/(H*PNew*H' + R); % From Table 1
     
     % Innovation vector computation 
-    dz = z - H * x;% + 1.15;% + 25;%(0.5*measAccCorr(k)*PPred(4,4)^2);%1.15; % Eq. (20)
+    dz = z - H * xNew;
     
     % Update state vector and covariance matrix
-    x = x + K*dz;% + 0.5 * measAccCorr(k) * timeDelaySkog(k)^2;
-    %x(4) = x(4) + %K(4)*(0.5*measAccCorr(k)*x(4)^2);
-    PUpdated = PPred - K*H*PPred;
-    PHistoric(:,:,k) = PUpdated;
+    xNew = xNew + K*dz;
+    PNew = PNew - K*H*PNew;
 end
 %% CLOSED LOOP CORRECTION
-% GNSS/INS Integration navigation solution at epoch
-% Output variables in the present
-pSkog(k) = pSkog(k) + x(1); % Position correction
-vSkog(k) = vSkog(k) + x(2); % Velocity correction
-biasAccSkog(k) = biasAccSkog(k) - x(3); % Bias Acc correction
-timeDelaySkog(k) = timeDelaySkog(k) + x(4); % Time delay correction
-timeDelaySkog(k) = max(0, timeDelaySkog(k));% Time delay can't be negative
-if timeDelaySkog(k) > tspan(k)
-    timeDelaySkog(k) = tspan(k);% Time delay can't be greater than the actual time
-end
+% Estimate update at delayed time
+estNew(COL_EST_POS)     = estPred(COL_EST_POS) + xNew(1); % Position correction
+estNew(COL_EST_VEL)     = estPred(COL_EST_VEL) + xNew(2); % Velocity correction
+estNew(COL_EST_ACCBIAS) = estPred(COL_EST_ACCBIAS) - xNew(3); % Bias Acc correction
+estNew(COL_EST_DELAY)   = estPred(COL_EST_DELAY) + xNew(4); % Time delay correction
+% Constraint delay
+estNew(COL_EST_DELAY)   = max(0, estNew(COL_EST_DELAY));% Time delay can't be negative
+estNew(COL_EST_DELAY)   = min(tspan(k), estNew(COL_EST_DELAY));% Time delay can't be greater than the actual time
 
+%% ESTIMATION AT PRESENT
 % Navigation equations to move estimation to the present
-vSkogPresent(k) = vSkog(k) + measAcc(k) * timeDelaySkog(k);
-pSkogPresent(k) = pSkog(k) + vSkogPresent(k) * timeDelaySkog(k);
-biasAccSkogPresent(k) = biasAccSkog(k);
-timeDelaySkogPresent(k) = timeDelaySkog(k);
+estPresent = navigationEquations(estNew, measAccHist(k), estNew(COL_EST_DELAY));
 
-FkPresent = eye(size(F)) + timeDelaySkog(k)*F;
-QkPresent = timeDelaySkog(k)*Q;
-PPresent(:,:,k) = FkPresent*PHistoric(:,:,k)*FkPresent' + QkPresent;
+% Prediction of covariance at present
+FkPresent = eye(size(F)) + estNew(COL_EST_DELAY)*F;
+QkPresent = estNew(COL_EST_DELAY)*Q;
+PPresent  = FkPresent*PNew*FkPresent' + QkPresent;
 
 end

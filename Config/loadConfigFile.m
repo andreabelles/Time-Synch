@@ -10,8 +10,6 @@ Config      = ReadYaml(configFile);
 Config.tIMU            = 1/Config.fIMU;         % s
 Config.tGNSS           = 1/Config.fGNSS;        % s
 
-Config.M               = Config.tGNSS/Config.tIMU;
-
-
+Config.M               = Config.tGNSS/Config.tIMU; % Rate between GNSS and IMU
 
 end
