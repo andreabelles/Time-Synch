@@ -1,4 +1,4 @@
-function [xNew, PNew, estNew, measAccCorr] = standardEKF(xOld, POld, estOld, pGNSS, measAcc, Config)
+function [xNew, PNew, estNew, measAccCorr] = standardEKF(xOld, POld, estOld, pGNSS, measAcc, measAccCorrPrev, Config)
 % EKF:  This function estimates the position, velocity and bias based on state-augmented KF
 %           from [Skog, Händel, 2011] Time Synchronization Errors in Loosely CoupledGPS-Aided 
 %           Inertial Navigation Systems (see Table 1). 
@@ -20,7 +20,7 @@ global COL_EST_POS COL_EST_VEL COL_EST_ACCBIAS
 measAccCorr = measAcc - estOld(COL_EST_ACCBIAS);  
 
 % Navigation equations computation: Update corrected inertial navigation solution
-estPred = navigationEquations(estOld, measAccCorr, Config.tIMU);
+estPred = navigationEquations(estOld, measAccCorr, measAccCorrPrev, Config.tIMU);
 
 % Initialization
 F = [0 1 0; 0 0 1; 0 0 0];

@@ -139,6 +139,13 @@ FigName = 'delay';
 if save, saveas(f, fullfile(savePath, [FigName, format])); end
 clear f;
 
+strColor1 = '#4DBEEE';
+color1 = sscanf(strColor1(2:end),'%2x%2x%2x',[1 3])/255;
+strColor2 = '#D95319';
+color2 = sscanf(strColor2(2:end),'%2x%2x%2x',[1 3])/255;
+strColor3 = '#77AC30';
+color3 = sscanf(strColor3(2:end),'%2x%2x%2x',[1 3])/255;
+
 % Position Estimation Error plot
 f = figure('units','normalized','outerposition',[0 0 figSize]);
 subplot(2,1,1)
@@ -146,12 +153,12 @@ p1 = plot(tVec, errPosEKF, 'b-', 'Linewidth', lineWidth); hold on;
 p2 = plot(tVec, errPosSkog, 'r-', 'Linewidth', lineWidth);
 p21 = plot(tVec, errPosSkogPresent, 'g-', 'Linewidth', lineWidth);
 % yline(mean(errPosEKF), 'k');
-p3 = plot(tVec, 3*sigmaPosEKF, 'Color', '#4DBEEE', 'Linewidth', lineWidth);
-p4 = plot(tVec, -3*sigmaPosEKF, 'Color', '#4DBEEE', 'Linewidth', lineWidth);
-p5 = plot(tVec, 3*sigmaPosSkog, 'Color', '#D95319', 'Linewidth', lineWidth);
-p6 = plot(tVec, -3*sigmaPosSkog, 'Color', '#D95319', 'Linewidth', lineWidth);
-p7 = plot(tVec, 3*sigmaPosSkogPresent, 'Color', '#77AC30', 'Linewidth', lineWidth);
-p8 = plot(tVec, -3*sigmaPosSkogPresent, 'Color', '#77AC30', 'Linewidth', lineWidth);
+p3 = plot(tVec, 3*sigmaPosEKF, 'Color', color1, 'Linewidth', lineWidth);
+p4 = plot(tVec, -3*sigmaPosEKF, 'Color', color1, 'Linewidth', lineWidth);
+p5 = plot(tVec, 3*sigmaPosSkog, 'Color', color2, 'Linewidth', lineWidth);
+p6 = plot(tVec, -3*sigmaPosSkog, 'Color', color2, 'Linewidth', lineWidth);
+p7 = plot(tVec, 3*sigmaPosSkogPresent, 'Color', color3, 'Linewidth', lineWidth);
+p8 = plot(tVec, -3*sigmaPosSkogPresent, 'Color', color3, 'Linewidth', lineWidth);
 xlabel('Time (s)'); ylabel('Position error (m)')
 if ~save, title('Error in position estimations'); end
 h = [p1 p2 p21 p3 p5 p7];
@@ -181,12 +188,12 @@ p1 = plot(tVec, errVelEKF, 'b-', 'Linewidth', lineWidth); hold on;
 p2 = plot(tVec, errVelSkog, 'r-', 'Linewidth', lineWidth);
 p21 = plot(tVec, errVelSkogPresent, 'g-', 'Linewidth', lineWidth);
 % yline(mean(errVelEKF), 'k');
-p3 = plot(tVec, 3*sigmaVelEKF, 'Color', '#4DBEEE', 'Linewidth', lineWidth);
-p4 = plot(tVec, -3*sigmaVelEKF, 'Color', '#4DBEEE', 'Linewidth', lineWidth);
-p5 = plot(tVec, 3*sigmaVelSkog, 'Color', '#D95319', 'Linewidth', lineWidth);
-p6 = plot(tVec, -3*sigmaVelSkog, 'Color', '#D95319', 'Linewidth', lineWidth);
-p7 = plot(tVec, 3*sigmaVelSkogPresent, 'Color', '#77AC30', 'Linewidth', lineWidth);
-p8 = plot(tVec, -3*sigmaVelSkogPresent, 'Color', '#77AC30', 'Linewidth', lineWidth);
+p3 = plot(tVec, 3*sigmaVelEKF, 'Color', color1, 'Linewidth', lineWidth);
+p4 = plot(tVec, -3*sigmaVelEKF, 'Color', color1, 'Linewidth', lineWidth);
+p5 = plot(tVec, 3*sigmaVelSkog, 'Color', color2, 'Linewidth', lineWidth);
+p6 = plot(tVec, -3*sigmaVelSkog, 'Color', color2, 'Linewidth', lineWidth);
+p7 = plot(tVec, 3*sigmaVelSkogPresent, 'Color', color3, 'Linewidth', lineWidth);
+p8 = plot(tVec, -3*sigmaVelSkogPresent, 'Color', color3, 'Linewidth', lineWidth);
 xlabel('Time (s)'); ylabel('Velocity error (m/s)')
 if ~save, title('Error in velocity estimations'); end
 h = [p1 p2 p21 p3 p5, p7];
