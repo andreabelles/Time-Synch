@@ -26,6 +26,15 @@ rv0:                    0       # m/s       Initial velocity
 rba0:                   0       # m/s^2     Initial acceleration bias 
 rt0:                    0       # s         Initial time delay 
 
+# LOOSELY COOPLED INTEGRATION:
+# GNSS/INS INTEGRATION NAVIGATION SOLUTION VECTOR INITIALIZATION
+xpNorth0:               1       # m         Initial North position
+xpEast0:                1       # m         Initial East position
+xv0:                    1       # m/s       Initial velocity error 
+xheading0:              45      # deg       Initial heading angle
+xba0:                   0       # m/s^2     Initial acceleration bias
+xbg0:                   0       # deg/s     Initial gyroscope bias
+xt0:                    0       # s         Initial time delay
 # COVARIANCE MATRIX INITIALIZATION
 sigmaInitPos:           0.4     # m         Initial STD of the position error
 sigmaInitVel:           0.4     # m/s       Initial STD of the velocity error

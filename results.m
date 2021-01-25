@@ -6,7 +6,7 @@ global COL_EST_POS COL_EST_VEL COL_EST_ACCBIAS COL_EST_DELAY
 %% Plots configuration
 lineWidth= 2;
 figSize = [0.8 0.8];
-save = 1;
+save = 0;
 savePath = '../Figures_auto/results_05';
 format = '.png'; %'.fig'
 if ~exist(savePath, 'dir'), mkdir(savePath); end
