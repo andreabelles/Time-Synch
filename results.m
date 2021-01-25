@@ -1,12 +1,12 @@
 function results(trueTrajectory, Config, estIMU, pGNSS, xEKF, PEKF, xSkog, PSkog, estEKF, estSkog, estSkogPresent, PSkogPresent)
 close all;
-global COL_TRAJECTORY_TIME COL_TRAJECTORY_POS COL_TRAJECTORY_VEL
+global COL_TRAJECTORY_TIME COL_TRAJECTORY_POS COL_TRAJECTORY_VEL COL_TRAJECTORY_BIASACC COL_TRAJECTORY_DELAY
 global COL_EST_POS COL_EST_VEL COL_EST_ACCBIAS COL_EST_DELAY
 
 %% Plots configuration
 lineWidth= 2;
 figSize = [0.8 0.8];
-save = 0;
+save = 1;
 savePath = '../Figures_auto/results_05';
 format = '.png'; %'.fig'
 if ~exist(savePath, 'dir'), mkdir(savePath); end
@@ -21,17 +21,17 @@ errPosGNSS  = trueTrajectory(:, COL_TRAJECTORY_POS) - pGNSS;
 % Standard EKF errors
 errPosEKF   = trueTrajectory(:, COL_TRAJECTORY_POS) - estEKF(:, COL_EST_POS);
 errVelEKF   = trueTrajectory(:, COL_TRAJECTORY_VEL) - estEKF(:, COL_EST_VEL);
-errBiasEKF  = Config.biasMeasAcc - estEKF(:, COL_EST_ACCBIAS);
+errBiasEKF  = trueTrajectory(:, COL_TRAJECTORY_BIASACC) - estEKF(:, COL_EST_ACCBIAS);
 % Skog EKF errors
 errPosSkog   = trueTrajectory(:, COL_TRAJECTORY_POS) - estSkog(:, COL_EST_POS);
 errVelSkog   = trueTrajectory(:, COL_TRAJECTORY_VEL) - estSkog(:, COL_EST_VEL);
-errDelaySkog = Config.tDelay - estSkog(:, COL_EST_DELAY);
-errBiasSkog  = Config.biasMeasAcc - estSkog(:, COL_EST_ACCBIAS);
+errBiasSkog  = trueTrajectory(:, COL_TRAJECTORY_BIASACC) - estSkog(:, COL_EST_ACCBIAS);
+errDelaySkog = trueTrajectory(:, COL_TRAJECTORY_DELAY) - estSkog(:, COL_EST_DELAY);
 % Skog EKF at present errors
 errPosSkogPresent   = trueTrajectory(:, COL_TRAJECTORY_POS) - estSkogPresent(:, COL_EST_POS);
 errVelSkogPresent   = trueTrajectory(:, COL_TRAJECTORY_VEL) - estSkogPresent(:, COL_EST_VEL);
-errBiasSkogPresent  = Config.biasMeasAcc - estSkogPresent(:, COL_EST_ACCBIAS);
-errDelaySkogPresent = Config.tDelay - estSkogPresent(:, COL_EST_DELAY);
+errBiasSkogPresent  = trueTrajectory(:, COL_TRAJECTORY_BIASACC) - estSkogPresent(:, COL_EST_ACCBIAS);
+errDelaySkogPresent = trueTrajectory(:, COL_TRAJECTORY_DELAY) - estSkogPresent(:, COL_EST_DELAY);
 
 % STD of Standard EKF estimations
 sigmaPosEKF    = sqrt(permute(PEKF(1,1,:), [3 1 2]));
@@ -111,7 +111,7 @@ clear f;
 
 % Accelerometer bias estimation
 f = figure('units','normalized','outerposition',[0 0 figSize]);
-plot(tVec([1 end]), Config.biasMeasAcc*ones(1, 2), 'k-', 'Linewidth', lineWidth); hold on;
+plot(tVec, trueTrajectory(:, COL_TRAJECTORY_BIASACC), 'k-', 'Linewidth', lineWidth); hold on;
 plot(tVec, estEKF(:, COL_EST_ACCBIAS), 'b-', 'Linewidth', lineWidth);
 plot(tVec, estSkog(:, COL_EST_ACCBIAS), 'r-', 'Linewidth', lineWidth);
 xlabel('Time (s)'); ylabel('Bias (m/s^2)')
@@ -125,7 +125,7 @@ clear f;
 % Time Delay estimation
 f = figure('units','normalized','outerposition',[0 0 figSize]);
 % subplot(2,1,1)
-plot(tVec([1 end]), Config.tDelay*ones(1, 2), 'k-', 'Linewidth', lineWidth); hold on;
+plot(tVec, trueTrajectory(:, COL_TRAJECTORY_DELAY), 'k-', 'Linewidth', lineWidth); hold on;
 plot(tVec, estSkog(:, COL_EST_DELAY), 'r-', 'Linewidth', lineWidth);
 xlabel('Time (s)'); ylabel('Time Delay (s)')
 legend('True', 'AEKF', 'Location', 'northeastoutside');

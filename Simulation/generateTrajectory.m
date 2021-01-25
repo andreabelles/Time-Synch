@@ -1,6 +1,7 @@
 function [trajectory] = generateTrajectory(Config)
 
-global COL_TRAJECTORY_TIME COL_TRAJECTORY_POS COL_TRAJECTORY_VEL COL_TRAJECTORY_ACC COL_TRAJECTORY_MAX
+global COL_TRAJECTORY_TIME COL_TRAJECTORY_POS COL_TRAJECTORY_VEL COL_TRAJECTORY_ACC ...
+        COL_TRAJECTORY_BIASACC COL_TRAJECTORY_DELAY COL_TRAJECTORY_MAX
 
 % Initializations
 nPts = Config.tEnd/Config.tIMU + 1; % from 0 to tEnd
@@ -8,6 +9,13 @@ trajectory = nan(nPts, COL_TRAJECTORY_MAX);
 
 % Simulation time vector
 trajectory(:, COL_TRAJECTORY_TIME) = 0:Config.tIMU:Config.tEnd;
+
+% Evolution of the accelerometer bias
+trajectory(:, COL_TRAJECTORY_BIASACC) = Config.biasMeasAcc;
+% Evolution of the measurement delay
+kJump = ceil(Config.delayJumpTime/Config.tIMU);
+trajectory(1:kJump, COL_TRAJECTORY_DELAY) = Config.tDelay;
+trajectory(kJump:nPts, COL_TRAJECTORY_DELAY) = Config.tDelay + Config.delayJumpAmp;
 
 % Initial values
 y0      = [Config.p0; Config.v0; Config.a0]; 
