@@ -58,24 +58,24 @@ sigmaPosSkogPresent    = sqrt(permute(PSkogPresent(1,1,:), [3 1 2]));
 sigmaVelSkogPresent    = sqrt(permute(PSkogPresent(2,2,:), [3 1 2]));
 
 % RMSE
-rmsePosIMU              = sqrt(mean(errPosIMU.^2));
-rmseVelIMU              = sqrt(mean(errVelIMU.^2));
+rmsePosIMU              = sqrt(mean(errPosIMU(kConv:end).^2));
+rmseVelIMU              = sqrt(mean(errVelIMU(kConv:end).^2));
 
-rmsePosGNSS             = sqrt(nanmean(errPosGNSS.^2));
+rmsePosGNSS             = sqrt(nanmean(errPosGNSS(kConv:end).^2));
 
-rmsePosEKF              = sqrt(mean(errPosEKF.^2));
-rmseVelEKF              = sqrt(mean(errVelEKF.^2));
-rmseBiasEKF             = sqrt(mean(errBiasEKF.^2));
+rmsePosEKF              = sqrt(mean(errPosEKF(kConv:end).^2));
+rmseVelEKF              = sqrt(mean(errVelEKF(kConv:end).^2));
+rmseBiasEKF             = sqrt(mean(errBiasEKF(kConv:end).^2));
 
-rmsePosSkog             = sqrt(mean(errPosSkog.^2));
-rmseVelSkog             = sqrt(mean(errVelSkog.^2));
-rmseBiasSkog            = sqrt(mean(errBiasSkog.^2));
+rmsePosSkog             = sqrt(mean(errPosSkog(kConv:end).^2));
+rmseVelSkog             = sqrt(mean(errVelSkog(kConv:end).^2));
+rmseBiasSkog            = sqrt(mean(errBiasSkog(kConv:end).^2));
 rmseDelaySkog           = sqrt(mean(errDelaySkog.^2));
 
-rmsePosSkogPresent      = sqrt(mean(errPosSkogPresent.^2));
-rmseVelSkogPresent      = sqrt(mean(errVelSkogPresent.^2));
-rmseBiasSkogPresent     = sqrt(mean(errBiasSkogPresent.^2));
-rmseDelaySkogPresent    = sqrt(mean(errDelaySkogPresent.^2));
+rmsePosSkogPresent      = sqrt(mean(errPosSkogPresent(kConv:end).^2));
+rmseVelSkogPresent      = sqrt(mean(errVelSkogPresent(kConv:end).^2));
+rmseBiasSkogPresent     = sqrt(mean(errBiasSkogPresent(kConv:end).^2));
+rmseDelaySkogPresent    = sqrt(mean(errDelaySkogPresent(kConv:end).^2));
 
 
 fprintf('\n\t\t\t\t\t ==== RMSE ==== \n');
@@ -100,11 +100,11 @@ xlabel('Time (s)'); ylabel('Position (m)')
 if showTitle, title('True trajectory'); end
 subplot(3,1,2)
 plot(tVec, trueTrajectory(:, COL_TRAJECTORY_VEL), 'k-', 'Linewidth', lineWidth);
-xlabel('Time (s)'); ylabel('Velocity (m)')
+xlabel('Time (s)'); ylabel('Velocity (m/s)')
 if showTitle, title('True velocity'); end
 subplot(3,1,3)
 plot(tVec, trueTrajectory(:, COL_TRAJECTORY_ACC), 'k-', 'Linewidth', lineWidth);
-xlabel('Time (s)'); ylabel('Acceleration (m)')
+xlabel('Time (s)'); ylabel('Acceleration (m/s^2)')
 if showTitle, title('True acceleration'); end
 
 FigName = 'true_trajectory';

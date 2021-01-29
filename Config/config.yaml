@@ -4,23 +4,23 @@
 tEnd:                   600     # seconds   End time of the simulation
 fIMU:                   100     # Hz        IMU and EKF rate
 fGNSS:                  1       # Hz        GNSS rate
-tDelay:                 0.3     # seconds   GNSS observations delay
+tDelay:                 0.1     # seconds   GNSS observations delay
 delayJumpTime:          0     # seconds   Instant when delay changes
 delayJumpAmp:           0     # seconds   Amplitude of delay change
 
 # IMU SENSORS MEASUREMENT NOISE:
-varMeasAcc:             0.01    # m^2/s^2   Variance of the accelerometer measurement
+varMeasAcc:             0.01    # m^2/s^4   Variance of the accelerometer measurement
 biasMeasAcc:            0.1     # m/s^2     Accelerometer bias
 # GNSS MEASUREMENT NOISE:
 varMeasPosGNSS:         100     # m^2       Variance of the GNSS position measurements
 
 # TRUE TRAJECTORY DEFINITION
-accFunction:            logistic #          Acceleration function: constant, logistic, sine
+accFunction:            sine    #          Acceleration function: constant, logistic, sine
 aLogSteep:              0.1     #           Steepness factor for the logistic function
 aLogT0:                 55      # s         Sigmoid midpoint for the logistic function
-aAmp:                   -1     # m/s^2     Amplitude of the acceleration sine/logistic 
-aFreq:                  0.01    # Hz        Frequency of the sinusoiidal variation of acceleration
-a0:                     1       # m/s^2     Initial value of acceleration
+aAmp:                   2.3     # m/s^2     Amplitude of the acceleration sine/logistic 
+aFreq:                  0.017   # Hz        Frequency of the sinusoiidal variation of acceleration
+a0:                     0       # m/s^2     Initial value of acceleration
 v0:                     0       # m/s       Initial velocity
 p0:                     0       # m         Initial position
 
@@ -41,4 +41,4 @@ varAccNoise:            0.01    # m^2/s^3   Variance of the accelerometer proces
 varAccBiasNoise:        1e-8    # m^2/s^5   Variance of the accelerometer bias process noise
 varDelayNoise:          0       # s^2       Variance of the delay process noise
 # MEASUREMENT NOISE COVARIANCE MATRIX (R)
-varPosGNSS:             130     # m^2       Variance of the GNSS measurement noise (R)
+varPosGNSS:             115     # m^2       Variance of the GNSS measurement noise (R)

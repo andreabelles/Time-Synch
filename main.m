@@ -1,4 +1,4 @@
-close all; clear; clc; addpath(genpath('./'));
+close all; clear; %clc; addpath(genpath('./'));
 % Time Synchronization GNSS-aided IMU project
 % (Description of the project here)
 
@@ -8,8 +8,8 @@ Config = loadConfigFile();
 % rng(1);
 
 % tDelays     = [0.5  0.4  0.3  0.2  0.1  0.05  0.01  0];
-% PDelayinits = [1    0.8  0.6  0.4  0.2  0.1   0.1   0.1];
-% Rvalues     = [135  135  135  130  130  120   120   120];
+% PDelayinits = [1.5    0.8  0.6  0.4  0.2  0.1   0.1   0.1];
+% Rvalues     = [115  135  135  130  130  120   120   120];
 % 
 % for i = 1:length(tDelays)
 %     Config.tDelay           = tDelays(i);
