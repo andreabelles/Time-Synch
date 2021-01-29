@@ -1,4 +1,4 @@
-function [xNew, PNew, estNew, measAccCorr, estPresent, PPresent] = ...
+function [xNew, PNew, estNew, measAccCorr, estPresent, PPresent, measAccInt, measAccIntLag] = ...
                                             skogEKF(xOld,       ...
                                                     POld,       ...
                                                     estOld,     ...
@@ -28,9 +28,12 @@ global COL_EST_POS COL_EST_VEL COL_EST_ACCBIAS COL_EST_DELAY
 
 if all(isnan(pGNSSHist)) % we need to wait tGNSS to find the first GNSS measurement available, otherwise we only have IMU
     measAccCorr = measAccHist(k) - estOld(COL_EST_ACCBIAS);
+    measAccInt = interp1(tspan(1:k), measAccHist(1:k), tspan(k));
+    measAccIntLag = lagrangeInterp(tspan(1:k), measAccHist(1:k), tspan(k));
 else
     timeAtDelay = tspan(k) - estOld(COL_EST_DELAY);
     measAccInt = interp1(tspan(1:k), measAccHist(1:k), timeAtDelay);
+    measAccIntLag = lagrangeInterp(tspan(1:k), measAccHist(1:k), timeAtDelay);
     measAccCorr = measAccInt - estOld(COL_EST_ACCBIAS);
 end
 % Navigation equations computation: Update corrected inertial navigation solution

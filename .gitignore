@@ -1,2 +1,6 @@
+# Autosave files
 *.asv
 *.m~
+
+# MATLAB data files
+*.mat
